@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 public class GommemodeCommand implements Command<FabricClientCommandSource> {
 
     public final String NAME = "gommemode";
+
     private SoundInstance currentSound = new PositionedSoundInstance(
             Gommemode.GOMMEMODE_SOUND_EVENT,
             SoundCategory.MASTER,
@@ -35,7 +36,7 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
 
 
     public void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
-        dispatcher.register(ClientCommandManager.literal(NAME)
+        dispatcher.register(ClientCommandManager.literal(NAME).executes(this)
                 .then(ClientCommandManager.argument("action", StringArgumentType.word())
                         .suggests(new ActionSuggestionProvider()).executes(this)));
     }
@@ -52,7 +53,8 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
         try {
             action = Action.valueOf(actionString);
         } catch (IllegalArgumentException e) {
-            source.sendError(Text.literal("Invalid action! Use either 'start' or 'stop'."));
+            // TODO: check if activated
+            action = Action.START;
             return 1;
         }
 
