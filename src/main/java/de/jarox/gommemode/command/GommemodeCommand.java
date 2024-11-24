@@ -45,6 +45,7 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
     public int run(CommandContext<FabricClientCommandSource> context) {
         var source = context.getSource();
         var player = source.getPlayer();
+        var pos = player.getBlockPos();
         var world = source.getWorld();
         var client = source.getClient();
 
@@ -72,7 +73,9 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
                         Random.create(),
                         player.getBlockPos());
                 client.getSoundManager().play(currentSound);
-                ParticleSpawner.spawnSphere(world, Vec3d.of(player.getBlockPos()), 3, ParticleTypes.CHERRY_LEAVES, 0.1);
+
+                world.addParticle(ParticleTypes.ELDER_GUARDIAN, pos.getX(), pos.getY(), pos.getZ(), 0, 0, 0);
+                ParticleSpawner.spawnSphere(world, Vec3d.of(player.getBlockPos()), 3, ParticleTypes.ENCHANT, 0.1);
                 return 0;
             case STOP:
                 if (!client.getSoundManager().isPlaying(currentSound)) {
