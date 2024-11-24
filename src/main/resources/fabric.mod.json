@@ -16,10 +16,10 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "de.jarox.gommemode.Gommemode"
+      "de.jarox.gommemode.GommeMode"
     ],
     "main": [
-      "de.jarox.gommemode.Gommemode"
+      "de.jarox.gommemode.GommeMode"
     ]
   },
   "depends": {

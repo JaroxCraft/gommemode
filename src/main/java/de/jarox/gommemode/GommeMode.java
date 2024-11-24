@@ -9,7 +9,7 @@ import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 
-public class Gommemode implements ModInitializer, ClientModInitializer {
+public class GommeMode implements ModInitializer, ClientModInitializer {
 
     public static final String MOD_ID = "gommemode";
 
@@ -17,9 +17,9 @@ public class Gommemode implements ModInitializer, ClientModInitializer {
     public static SoundEvent GOMMEMODE_SOUND_EVENT = Registry.register(Registries.SOUND_EVENT,
             GOMMEMODE_SONG, SoundEvent.of(GOMMEMODE_SONG));
 
-    public static Gommemode INSTANCE;
+    public static GommeMode INSTANCE;
 
-    public Gommemode() {
+    public GommeMode() {
         INSTANCE = this;
     }
 

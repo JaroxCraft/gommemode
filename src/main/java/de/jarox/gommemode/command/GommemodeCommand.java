@@ -7,12 +7,15 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import de.jarox.gommemode.Gommemode;
+import de.jarox.gommemode.GommeMode;
 import de.jarox.gommemode.util.ParticleSpawner;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.sound.SoundInstance;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
@@ -27,7 +30,7 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
     public final String NAME = "gommemode";
 
     private SoundInstance currentSound = new PositionedSoundInstance(
-            Gommemode.GOMMEMODE_SOUND_EVENT,
+            GommeMode.GOMMEMODE_SOUND_EVENT,
             SoundCategory.MASTER,
             1f,
             1f,
@@ -43,11 +46,11 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
 
     @Override
     public int run(CommandContext<FabricClientCommandSource> context) {
-        var source = context.getSource();
-        var player = source.getPlayer();
-        var pos = player.getBlockPos();
-        var world = source.getWorld();
-        var client = source.getClient();
+        FabricClientCommandSource source = context.getSource();
+        PlayerEntity player = source.getPlayer();
+        BlockPos pos = player.getBlockPos();
+        ClientWorld world = source.getWorld();
+        MinecraftClient client = source.getClient();
 
         String actionString = context.getArgument("action", String.class).toUpperCase();
         Action action;
@@ -66,7 +69,7 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
                     return 1;
                 }
                 currentSound = new PositionedSoundInstance(
-                        Gommemode.GOMMEMODE_SOUND_EVENT,
+                        GommeMode.GOMMEMODE_SOUND_EVENT,
                         SoundCategory.MASTER,
                         1f,
                         1f,
