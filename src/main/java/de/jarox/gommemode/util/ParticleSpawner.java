@@ -5,9 +5,6 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.util.math.Vec3d;
 
 public final class ParticleSpawner {
-    public static void spawnParticle(ClientWorld world, Vec3d pos, ParticleEffect particle) {
-        world.addParticle(particle, pos.x, pos.y, pos.z, 0d, 0d, 0d);
-    }
 
     public static void spawnSphere(ClientWorld world, Vec3d center, double radius, ParticleEffect particle, double particleDensity) {
         for (double phi = 0; phi <= Math.PI; phi += particleDensity) {
