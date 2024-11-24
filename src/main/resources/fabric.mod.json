@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "gommemode",
+  "version": "${version}",
+  "name": "Gommemode",
+  "description": "Simple mod that can turn on the Gommemode",
+  "authors": [
+    "JaroxCraft"
+  ],
+  "contact": {
+    "sources": "https://github.com/jaroxcraft/gommemode",
+    "homepage": "https://jarox.de"
+  },
+  "icon": "assets/gommemode/icon.png",
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "de.jarox.gommemode.Gommemode"
+    ],
+    "main": [
+      "de.jarox.gommemode.Gommemode"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "~${minecraft_version}"
+  }
+}
