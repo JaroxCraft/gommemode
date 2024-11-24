@@ -11,7 +11,9 @@ import net.minecraft.util.Identifier;
 
 public class Gommemode implements ModInitializer, ClientModInitializer {
 
-    public static Identifier GOMMEMODE_SONG = Identifier.of("gommemode:song");
+    public static final String MOD_ID = "gommemode";
+
+    public static Identifier GOMMEMODE_SONG = Identifier.of(MOD_ID, "song");
     public static SoundEvent GOMMEMODE_SOUND_EVENT = Registry.register(Registries.SOUND_EVENT,
             GOMMEMODE_SONG, SoundEvent.of(GOMMEMODE_SONG));
 
