@@ -1,8 +1,8 @@
 package de.jarox.gommemode.command;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -25,7 +25,7 @@ import net.minecraft.util.math.random.Random;
 
 import java.util.concurrent.CompletableFuture;
 
-public class GommemodeCommand implements Command<FabricClientCommandSource> {
+public class GommemodeCommand {
 
     public final String NAME = "gommemode";
 
@@ -39,28 +39,22 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
 
 
     public void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
-        dispatcher.register(ClientCommandManager.literal(NAME).executes(this)
-                .then(ClientCommandManager.argument("action", StringArgumentType.word())
-                        .suggests(new ActionSuggestionProvider()).executes(this)));
+        dispatcher.register(
+                ClientCommandManager.literal(NAME)
+                        .executes(context -> run(context.getSource(), Action.TOGGLE))
+                        .then(
+                                ClientCommandManager.argument("action", new ActionArgumentType())
+                                        .suggests(new ActionSuggestionProvider())
+                                        .executes(context -> run(context.getSource(), context.getArgument("action", Action.class)))
+                        )
+        );
     }
 
-    @Override
-    public int run(CommandContext<FabricClientCommandSource> context) {
-        FabricClientCommandSource source = context.getSource();
+    public int run(FabricClientCommandSource source, Action action) {
         PlayerEntity player = source.getPlayer();
         BlockPos pos = player.getBlockPos();
         ClientWorld world = source.getWorld();
         MinecraftClient client = source.getClient();
-
-        String actionString = context.getArgument("action", String.class).toUpperCase();
-        Action action;
-        try {
-            action = Action.valueOf(actionString);
-        } catch (IllegalArgumentException e) {
-            // TODO: check if activated
-            action = Action.START;
-            return 1;
-        }
 
         switch (action) {
             case START:
@@ -87,26 +81,41 @@ public class GommemodeCommand implements Command<FabricClientCommandSource> {
                 }
                 client.getSoundManager().stop(currentSound);
                 break;
-
-            default:
-                source.sendError(Text.literal("Invalid action! Use either 'start' or 'stop'."));
-                return 1;
+            case TOGGLE:
+                if (client.getSoundManager().isPlaying(currentSound)) {
+                    run(source, Action.STOP);
+                } else {
+                    run(source, Action.START);
+                }
+                return 0;
         }
         return 1;
     }
 
-    private enum Action {
+    public enum Action {
         START,
         STOP,
+        TOGGLE
+    }
+
+    public static class ActionArgumentType implements ArgumentType<Action> {
+        @Override
+        public Action parse(StringReader reader) {
+            String string = reader.readUnquotedString().toUpperCase();
+            return Action.valueOf(string);
+        }
     }
 
     private static class ActionSuggestionProvider implements SuggestionProvider<FabricClientCommandSource> {
         @Override
         public CompletableFuture<Suggestions> getSuggestions(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
-            String input = builder.getRemaining().toLowerCase();
+            String input = builder.getRemaining();
+            boolean isUpperCase = !input.isEmpty() && Character.isUpperCase(input.charAt(0));
+
             for (Action value : Action.values()) {
-                String suggestion = value.name().toLowerCase();
-                if (suggestion.startsWith(input)) {
+                String suggestion = isUpperCase ? value.name().toUpperCase() : value.name().toLowerCase();
+
+                if (input.isEmpty() || suggestion.startsWith(input)) {
                     builder.suggest(suggestion);
                 }
             }
