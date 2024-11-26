@@ -20,6 +20,9 @@
     ],
     "main": [
       "de.jarox.gommemode.GommeMode"
+    ],
+    "modmenu": [
+      "de.jarox.gommemode.modmenu.ModMenuApiImpl"
     ]
   },
   "depends": {
