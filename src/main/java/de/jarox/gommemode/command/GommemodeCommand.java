@@ -59,7 +59,7 @@ public class GommemodeCommand {
         switch (action) {
             case START:
                 if (client.getSoundManager().isPlaying(currentSound)) {
-                    source.sendError(Text.literal("The Gommemode is already active!"));
+                    source.sendError(Text.translatable("gommemode.already_active"));
                     return 1;
                 }
                 currentSound = new PositionedSoundInstance(
@@ -76,7 +76,7 @@ public class GommemodeCommand {
                 return 0;
             case STOP:
                 if (!client.getSoundManager().isPlaying(currentSound)) {
-                    source.sendError(Text.literal("The Gommemode is already stopped!"));
+                    source.sendError(Text.translatable("gommemode.already_inactive"));
                     return 1;
                 }
                 client.getSoundManager().stop(currentSound);

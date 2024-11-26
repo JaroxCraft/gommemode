@@ -1,0 +1,6 @@
+{
+  "gommemode.activated": "The Gommemode has been activated.",
+  "gommemode.deactivated": "The Gommemode has been deactivated.",
+  "gommemode.already_active": "The Gommemode is already active.",
+  "gommemode.already_inactive": "The Gommemode is already inactive."
+}
