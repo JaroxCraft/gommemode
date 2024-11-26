@@ -1,6 +1,7 @@
 package de.jarox.gommemode;
 
 import de.jarox.gommemode.command.GommemodeCommand;
+import de.jarox.gommemode.command.GommemodeCommandAction;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -32,8 +33,8 @@ public class GommeMode implements ModInitializer, ClientModInitializer {
     public void onInitializeClient() {
         ArgumentTypeRegistry.registerArgumentType(
                 Identifier.of(GommeMode.MOD_ID, "action"),
-                GommemodeCommand.ActionArgumentType.class,
-                ConstantArgumentSerializer.of(GommemodeCommand.ActionArgumentType::new)
+                GommemodeCommandAction.ActionArgumentType.class,
+                ConstantArgumentSerializer.of(GommemodeCommandAction.ActionArgumentType::new)
         );
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> new GommemodeCommand().register(dispatcher));
     }
