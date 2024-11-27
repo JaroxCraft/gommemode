@@ -6,6 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
@@ -16,6 +17,7 @@ import net.minecraft.util.math.random.Random;
 public class GommemodeManager {
     private static GommemodeManager instance;
     private SoundInstance currentSound;
+    private GommeEntity gomme;
 
     private GommemodeManager() {
     }
@@ -32,9 +34,11 @@ public class GommemodeManager {
     }
 
     public void start(PlayerEntity player, ClientWorld world) {
-        BlockPos pos = player.getBlockPos();
         MinecraftClient client = MinecraftClient.getInstance();
 
+        Vec3d lookPos = player.raycast(5, 0, false).getPos();
+        BlockPos pos = new BlockPos((int)lookPos.x, (int)lookPos.y, (int)lookPos.z);
+    
         currentSound = new PositionedSoundInstance(
                 GommeMode.GOMMEMODE_SOUND_EVENT,
                 SoundCategory.MASTER,
@@ -43,16 +47,17 @@ public class GommemodeManager {
                 Random.create(),
                 pos);
         client.getSoundManager().play(currentSound);
-
-        world.addParticle(ParticleTypes.ELDER_GUARDIAN, pos.getX(), pos.getY(), pos.getZ(), 0, 0, 0);
-        ParticleSpawner.spawnSphere(world, Vec3d.of(pos), 3, ParticleTypes.ENCHANT, 0.1);
-
-        GommeEntity gomme = new GommeEntity(GommeMode.GOMME_ENTITY_TYPE, world);
+    
+        world.addParticle(ParticleTypes.ELDER_GUARDIAN, lookPos.x, lookPos.y, lookPos.z, 0, 0, 0);
+        ParticleSpawner.spawnSphere(world, lookPos, 3, ParticleTypes.ENCHANT, 0.1);
+    
+        gomme = new GommeEntity(GommeMode.GOMME_ENTITY_TYPE, world);
         world.addEntity(gomme);
-        gomme.setPosition(Vec3d.of(pos));
+        gomme.setPosition(lookPos);
     }
 
     public void stop() {
         MinecraftClient.getInstance().getSoundManager().stop(currentSound);
+        gomme.remove(Entity.RemovalReason.KILLED);
     }
 }

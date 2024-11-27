@@ -1,17 +1,17 @@
 package de.jarox.gommemode.entity;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Arm;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class GommeEntity extends LivingEntity {
-
-    private float danceTicks = 0f;
 
     public GommeEntity(EntityType<? extends LivingEntity> entityType, World world) {
         super(entityType, world);
@@ -39,19 +39,14 @@ public class GommeEntity extends LivingEntity {
     @Override
     public void baseTick() {
         super.baseTick();
+        lookAtPlayer();
+    }
 
-        danceTicks += 0.1f;
-
-        float danceHeight = MathHelper.sin(danceTicks) * 0.1f;
-        float danceHorizontal = MathHelper.cos(danceTicks * 0.5f) * 0.05f;
-
-        this.setPosition(
-                this.getX() + danceHorizontal,
-                this.getY() + danceHeight,
-                this.getZ() + danceHorizontal
-        );
-
-        this.setYaw(this.getYaw() + 5f);
-        this.setHeadYaw(this.getHeadYaw() + 5f);
+    private void lookAtPlayer() {
+        if (this.getWorld().isClient) {
+            assert MinecraftClient.getInstance().player != null;
+            Vec3d playerPos = MinecraftClient.getInstance().player.getPos();
+            this.lookAt(EntityAnchorArgumentType.EntityAnchor.EYES, playerPos);
+        }
     }
 }
