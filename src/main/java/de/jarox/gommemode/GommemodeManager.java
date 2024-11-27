@@ -1,5 +1,6 @@
 package de.jarox.gommemode;
 
+import de.jarox.gommemode.entity.GommeEntity;
 import de.jarox.gommemode.util.ParticleSpawner;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
@@ -45,6 +46,10 @@ public class GommemodeManager {
 
         world.addParticle(ParticleTypes.ELDER_GUARDIAN, pos.getX(), pos.getY(), pos.getZ(), 0, 0, 0);
         ParticleSpawner.spawnSphere(world, Vec3d.of(pos), 3, ParticleTypes.ENCHANT, 0.1);
+
+        GommeEntity gomme = new GommeEntity(GommeMode.GOMME_ENTITY_TYPE, world);
+        world.addEntity(gomme);
+        gomme.setPosition(Vec3d.of(pos));
     }
 
     public void stop() {

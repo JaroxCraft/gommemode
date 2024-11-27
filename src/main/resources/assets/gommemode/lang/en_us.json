@@ -4,5 +4,6 @@
   "gommemode.already_active": "The Gommemode is already active.",
   "gommemode.already_inactive": "The Gommemode is already inactive.",
   "category.gommemode.general": "Gommemode",
-  "key.gommemode.toggle": "Toggle Gommemode"
+  "key.gommemode.toggle": "Toggle Gommemode",
+  "entity.gommemode.gomme": "GommeHD"
 }
