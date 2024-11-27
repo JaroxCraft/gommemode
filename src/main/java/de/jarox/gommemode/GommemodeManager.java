@@ -37,8 +37,8 @@ public class GommemodeManager {
         MinecraftClient client = MinecraftClient.getInstance();
 
         Vec3d lookPos = player.raycast(5, 0, false).getPos();
-        BlockPos pos = new BlockPos((int)lookPos.x, (int)lookPos.y, (int)lookPos.z);
-    
+        BlockPos pos = new BlockPos((int) lookPos.x, (int) lookPos.y, (int) lookPos.z);
+
         currentSound = new PositionedSoundInstance(
                 GommeMode.GOMMEMODE_SOUND_EVENT,
                 SoundCategory.MASTER,
@@ -47,10 +47,9 @@ public class GommemodeManager {
                 Random.create(),
                 pos);
         client.getSoundManager().play(currentSound);
-    
-        world.addParticle(ParticleTypes.ELDER_GUARDIAN, lookPos.x, lookPos.y, lookPos.z, 0, 0, 0);
-        ParticleSpawner.spawnSphere(world, lookPos, 3, ParticleTypes.ENCHANT, 0.1);
-    
+
+        ParticleSpawner.spawnSphere(world, lookPos.add(0, 0.8, 0), 2, ParticleTypes.FIREWORK, 0.2);
+
         gomme = new GommeEntity(GommeMode.GOMME_ENTITY_TYPE, world);
         world.addEntity(gomme);
         gomme.setPosition(lookPos);
