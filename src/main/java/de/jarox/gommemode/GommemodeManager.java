@@ -2,9 +2,11 @@ package de.jarox.gommemode;
 
 import de.jarox.gommemode.entity.GommeEntity;
 import de.jarox.gommemode.util.ParticleSpawner;
+import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.sound.SoundInstance;
+import net.minecraft.client.sound.SoundManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,7 +17,12 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 
 public class GommemodeManager {
+
     private static GommemodeManager instance;
+    private final MinecraftClient client = MinecraftClient.getInstance();
+    private final SoundManager soundManager = client.getSoundManager();
+    @Getter
+    private boolean active;
     private SoundInstance currentSound;
     private GommeEntity gomme;
 
@@ -29,13 +36,24 @@ public class GommemodeManager {
         return instance;
     }
 
-    public boolean isActive() {
-        return MinecraftClient.getInstance().getSoundManager().isPlaying(currentSound);
+    public void setActive(boolean active) {
+        // value wasn't changed
+        if (this.active == active) return;
+
+        // turned off
+        if (!active) {
+            GommeMode.LOGGER.info("Stopping Gommemode");
+            stop();
+        }
+
+        this.active = active;
+    }
+
+    public void updateActive() {
+        this.setActive(soundManager.isPlaying(currentSound));
     }
 
     public void start(PlayerEntity player, ClientWorld world) {
-        MinecraftClient client = MinecraftClient.getInstance();
-
         Vec3d lookPos = player.raycast(5, 0, false).getPos();
         BlockPos pos = new BlockPos((int) lookPos.x, (int) lookPos.y, (int) lookPos.z);
 
@@ -46,17 +64,20 @@ public class GommemodeManager {
                 1f,
                 Random.create(),
                 pos);
-        client.getSoundManager().play(currentSound);
+
+        this.setActive(true);
+
+        this.soundManager.play(currentSound);
 
         ParticleSpawner.spawnSphere(world, lookPos.add(0, 0.8, 0), 2, ParticleTypes.FIREWORK, 0.2);
 
-        gomme = new GommeEntity(GommeMode.GOMME_ENTITY_TYPE, world);
-        world.addEntity(gomme);
-        gomme.setPosition(lookPos);
+        this.gomme = new GommeEntity(GommeMode.GOMME_ENTITY_TYPE, world);
+        world.addEntity(this.gomme);
+        this.gomme.setPosition(lookPos);
     }
 
     public void stop() {
-        MinecraftClient.getInstance().getSoundManager().stop(currentSound);
+        this.soundManager.stop(currentSound);
         gomme.remove(Entity.RemovalReason.KILLED);
     }
 }

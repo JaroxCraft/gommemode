@@ -23,10 +23,14 @@ import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GommeMode implements ModInitializer, ClientModInitializer {
 
     public static final String MOD_ID = "gommemode";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
     public static final EntityType<GommeEntity> GOMME_ENTITY_TYPE = EntityType.Builder.<GommeEntity>create(SpawnGroup.CREATURE).build();
     public static Identifier GOMMEMODE_SONG = Identifier.of(MOD_ID, "song");
     public static SoundEvent GOMMEMODE_SOUND_EVENT = Registry.register(Registries.SOUND_EVENT, GOMMEMODE_SONG, SoundEvent.of(GOMMEMODE_SONG));
@@ -61,13 +65,16 @@ public class GommeMode implements ModInitializer, ClientModInitializer {
                 "category.gommemode.general"
         ));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            GommemodeManager manager = GommemodeManager.getInstance();
+            manager.updateActive();
+
             while (toggleKey.wasPressed()) {
-                if (GommemodeManager.getInstance().isActive()) {
-                    GommemodeManager.getInstance().stop();
+                if (manager.isActive()) {
+                    manager.stop();
                 } else {
                     assert client.player != null;
                     assert client.world != null;
-                    GommemodeManager.getInstance().start(client.player, client.world);
+                    manager.start(client.player, client.world);
                 }
             }
         });
