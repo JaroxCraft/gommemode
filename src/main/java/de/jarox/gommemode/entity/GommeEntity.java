@@ -46,7 +46,7 @@ public class GommeEntity extends LivingEntity {
         if (this.getWorld().isClient) {
             assert MinecraftClient.getInstance().player != null;
             Vec3d playerPos = MinecraftClient.getInstance().player.getPos();
-            this.lookAt(EntityAnchorArgumentType.EntityAnchor.EYES, playerPos);
+            this.lookAt(EntityAnchorArgumentType.EntityAnchor.FEET, playerPos);
         }
     }
 }
