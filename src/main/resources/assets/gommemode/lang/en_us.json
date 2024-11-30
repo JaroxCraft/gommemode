@@ -1,6 +1,7 @@
 {
-  "gommemode.activated": "The Gommemode has been activated.",
-  "gommemode.deactivated": "The Gommemode has been deactivated.",
+  "gommemode.change": "The Gommemode has been ",
+  "gommemode.stopped": "deactivated",
+  "gommemode.started": "activated",
   "gommemode.already_active": "The Gommemode is already active.",
   "gommemode.already_inactive": "The Gommemode is already inactive.",
   "category.gommemode.general": "Gommemode",

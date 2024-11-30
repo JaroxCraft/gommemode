@@ -12,6 +12,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
@@ -54,6 +56,12 @@ public class GommemodeManager {
     }
 
     public void start(PlayerEntity player, ClientWorld world) {
+        this.client.inGameHud.setOverlayMessage(
+                Text.translatable("gommemode.change")
+                        .append(Text.translatable("gommemode.started")
+                                .withColor(Colors.GREEN)), false
+        );
+
         Vec3d lookPos = player.raycast(5, 0, false).getPos();
         BlockPos pos = new BlockPos((int) lookPos.x, (int) lookPos.y, (int) lookPos.z);
 
@@ -77,6 +85,11 @@ public class GommemodeManager {
     }
 
     public void stop() {
+        this.client.inGameHud.setOverlayMessage(
+                Text.translatable("gommemode.change")
+                        .append(Text.translatable("gommemode.stopped")
+                                .withColor(Colors.RED)), false
+        );
         this.soundManager.stop(currentSound);
         gomme.remove(Entity.RemovalReason.KILLED);
     }
