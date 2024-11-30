@@ -24,11 +24,11 @@ public class GommeMode implements ModInitializer, ClientModInitializer {
 
     public static final String MOD_ID = "gommemode";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
     public static final EntityType<GommeEntity> GOMME_ENTITY_TYPE = EntityType.Builder.<GommeEntity>create(SpawnGroup.CREATURE).build();
     public static Identifier GOMMEMODE_SONG = Identifier.of(MOD_ID, "song");
     public static SoundEvent GOMMEMODE_SOUND_EVENT = Registry.register(Registries.SOUND_EVENT, GOMMEMODE_SONG, SoundEvent.of(GOMMEMODE_SONG));
     public static GommeMode INSTANCE;
+    private final GommemodeManager manager = GommemodeManager.getInstance();
     private KeyBinding toggleKey;
 
     public GommeMode() {
@@ -56,17 +56,12 @@ public class GommeMode implements ModInitializer, ClientModInitializer {
                 "category.gommemode.general"
         ));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            GommemodeManager manager = GommemodeManager.getInstance();
-            manager.updateActive();
+            if (!(manager.isActive() == manager.isSoundPlaying())) {
+                manager.deactivate();
+            }
 
             while (toggleKey.wasPressed()) {
-                if (manager.isActive()) {
-                    manager.stop();
-                } else {
-                    assert client.player != null;
-                    assert client.world != null;
-                    manager.start(client.player, client.world);
-                }
+                manager.toggleActive(client.player, client.world);
             }
         });
     }

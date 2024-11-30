@@ -4,9 +4,9 @@ import de.jarox.gommemode.entity.GommeEntity;
 import de.jarox.gommemode.util.ParticleSpawner;
 import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.client.sound.SoundManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,7 +20,6 @@ public class GommemodeManager {
 
     private static GommemodeManager instance;
     private final MinecraftClient client = MinecraftClient.getInstance();
-    private final SoundManager soundManager = client.getSoundManager();
     @Getter
     private boolean active;
     private SoundInstance currentSound;
@@ -36,21 +35,28 @@ public class GommemodeManager {
         return instance;
     }
 
-    public void setActive(boolean active) {
-        // value wasn't changed
-        if (this.active == active) return;
-
-        // turned off
-        if (!active) {
-            GommeMode.LOGGER.info("Stopping Gommemode");
-            stop();
-        }
-
-        this.active = active;
+    public boolean isSoundPlaying() {
+        return this.currentSound != null && this.client.getSoundManager().isPlaying(this.currentSound);
     }
 
-    public void updateActive() {
-        this.setActive(soundManager.isPlaying(currentSound));
+    public void toggleActive(ClientPlayerEntity player, ClientWorld world) {
+        if (this.active) {
+            this.deactivate();
+        } else {
+            this.activate(player, world);
+        }
+    }
+
+    public void activate(ClientPlayerEntity player, ClientWorld world) {
+        if (this.active) return;
+        this.active = true;
+        start(player, world);
+    }
+
+    public void deactivate() {
+        if (!this.active) return;
+        this.active = false;
+        stop();
     }
 
     public void start(PlayerEntity player, ClientWorld world) {
@@ -65,9 +71,7 @@ public class GommemodeManager {
                 Random.create(),
                 pos);
 
-        this.setActive(true);
-
-        this.soundManager.play(currentSound);
+        this.client.getSoundManager().play(currentSound);
 
         ParticleSpawner.spawnSphere(world, lookPos.add(0, 0.8, 0), 2, ParticleTypes.FIREWORK, 0.2);
 
@@ -77,7 +81,7 @@ public class GommemodeManager {
     }
 
     public void stop() {
-        this.soundManager.stop(currentSound);
+        this.client.getSoundManager().stop(currentSound);
         gomme.remove(Entity.RemovalReason.KILLED);
     }
 }
