@@ -61,7 +61,7 @@ public class GommeMode implements ModInitializer, ClientModInitializer {
 
             while (toggleKey.wasPressed()) {
                 if (manager.isActive()) {
-                    manager.stop();
+                    manager.setActive(false);
                 } else {
                     assert client.player != null;
                     assert client.world != null;
