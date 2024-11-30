@@ -49,13 +49,19 @@ public class GommemodeManager {
 
     public void activate(ClientPlayerEntity player, ClientWorld world) {
         if (this.active) return;
+
         this.active = true;
+        this.client.getToastManager().add(new GommemodeToast(true));
+
         start(player, world);
     }
 
     public void deactivate() {
         if (!this.active) return;
+
         this.active = false;
+        this.client.getToastManager().add(new GommemodeToast(false));
+
         stop();
     }
 
