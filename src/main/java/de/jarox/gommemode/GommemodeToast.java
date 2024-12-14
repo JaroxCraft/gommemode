@@ -17,7 +17,7 @@ public class GommemodeToast implements Toast {
             .append(Text.translatable("gommemode.stopped")
                     .withColor(Colors.RED));
 
-    public final static int DURATION_MS = 3 * 1000;
+    public final static int DURATION_MS = 2 * 1000;
     private final static Identifier TEXTURE = Identifier.ofVanilla("toast/advancement");
     private final boolean active;
 
