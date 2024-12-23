@@ -1,11 +1,13 @@
 plugins {
     id 'fabric-loom' version '1.8-SNAPSHOT'
     id "io.freefair.lombok" version "8.11"
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 repositories {
     maven { url = "https://maven.terraformersmc.com/" }
     maven { url "https://maven.shedaniel.me/" }
+    mavenCentral()
 }
 
 version = project.mod_version
@@ -24,6 +26,7 @@ dependencies {
 
     modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
     modApi "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
 }
 
 processResources {
@@ -59,4 +62,8 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
     }
+}
+
+kotlin {
+    jvmToolchain(targetJavaVersion)
 }

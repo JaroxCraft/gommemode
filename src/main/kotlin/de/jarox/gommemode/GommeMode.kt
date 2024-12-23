@@ -1,68 +1,74 @@
-package de.jarox.gommemode;
+package de.jarox.gommemode
 
-import de.jarox.gommemode.entity.GommeEntity;
-import de.jarox.gommemode.entity.GommeEntityRenderer;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import org.lwjgl.glfw.GLFW;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.jarox.gommemode.entity.GommeEntity
+import de.jarox.gommemode.entity.GommeEntityRenderer
+import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
+import net.fabricmc.fabric.api.`object`.builder.v1.entity.FabricDefaultAttributeRegistry
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.option.KeyBinding
+import net.minecraft.client.render.entity.EntityRendererFactory
+import net.minecraft.client.util.InputUtil
+import net.minecraft.entity.EntityType
+import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.SpawnGroup
+import net.minecraft.registry.Registries
+import net.minecraft.registry.Registry
+import net.minecraft.sound.SoundEvent
+import net.minecraft.util.Identifier
+import org.lwjgl.glfw.GLFW
 
-public class GommeMode implements ModInitializer, ClientModInitializer {
+class GommeMode : ModInitializer, ClientModInitializer {
+    private var toggleKey: KeyBinding? = null
 
-    public static final String MOD_ID = "gommemode";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    public static final EntityType<GommeEntity> GOMME_ENTITY_TYPE = EntityType.Builder.<GommeEntity>create(SpawnGroup.CREATURE).build();
-    public static Identifier GOMMEMODE_SONG = Identifier.of(MOD_ID, "song");
-    public static SoundEvent GOMMEMODE_SOUND_EVENT = Registry.register(Registries.SOUND_EVENT, GOMMEMODE_SONG, SoundEvent.of(GOMMEMODE_SONG));
-    public static GommeMode INSTANCE;
-    private final GommemodeManager manager = GommemodeManager.getInstance();
-    private KeyBinding toggleKey;
-
-    public GommeMode() {
-        INSTANCE = this;
+    init {
+        INSTANCE = this
     }
 
-    @Override
-    public void onInitialize() {
+    override fun onInitialize() {
         Registry.register(
-                Registries.ENTITY_TYPE,
-                Identifier.of(GommeMode.MOD_ID, "gomme"),
-                GOMME_ENTITY_TYPE
-        );
-        FabricDefaultAttributeRegistry.register(GOMME_ENTITY_TYPE, GommeEntity.createLivingAttributes());
+            Registries.ENTITY_TYPE,
+            Identifier.of(MOD_ID, "gomme"),
+            GOMME_ENTITY_TYPE
+        )
+        FabricDefaultAttributeRegistry.register(GOMME_ENTITY_TYPE, LivingEntity.createLivingAttributes())
     }
 
-    @Override
-    public void onInitializeClient() {
-        EntityRendererRegistry.register(GOMME_ENTITY_TYPE, GommeEntityRenderer::new);
+    override fun onInitializeClient() {
+        EntityRendererRegistry.register<GommeEntity?>(
+            GOMME_ENTITY_TYPE
+        ) { ctx: EntityRendererFactory.Context? -> GommeEntityRenderer(ctx!!) }
 
-        toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        toggleKey = KeyBindingHelper.registerKeyBinding(
+            KeyBinding(
                 "key.gommemode.toggle",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_G,
                 "category.gommemode.general"
-        ));
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!(manager.isActive() == manager.isSoundPlaying())) {
-                manager.deactivate();
+            )
+        )
+        ClientTickEvents.END_CLIENT_TICK.register(ClientTickEvents.EndTick { client: MinecraftClient ->
+            while (toggleKey!!.wasPressed()) {
+                GommemodeManager.toggleActive(client.player!!, client.world!!)
             }
+        })
+    }
 
-            while (toggleKey.wasPressed()) {
-                manager.toggleActive(client.player, client.world);
-            }
-        });
+    companion object {
+
+        lateinit var INSTANCE: GommeMode
+
+        const val MOD_ID: String = "gommemode"
+        val GOMME_ENTITY_TYPE: EntityType<GommeEntity?> =
+            EntityType.Builder.create<GommeEntity?>(SpawnGroup.CREATURE).build()
+        private val GOMMEMODE_SONG: Identifier = Identifier.of(MOD_ID, "song")
+        var GOMMEMODE_SOUND_EVENT: SoundEvent = Registry.register(
+            Registries.SOUND_EVENT, GOMMEMODE_SONG, SoundEvent.of(
+                GOMMEMODE_SONG
+            )
+        )
     }
 }

@@ -1,12 +1,12 @@
-package de.jarox.gommemode.modmenu;
+package de.jarox.gommemode.modmenu
 
-import com.terraformersmc.modmenu.api.ConfigScreenFactory;
-import com.terraformersmc.modmenu.api.ModMenuApi;
-import de.jarox.gommemode.config.Config;
+import com.terraformersmc.modmenu.api.ConfigScreenFactory
+import com.terraformersmc.modmenu.api.ModMenuApi
+import de.jarox.gommemode.config.Config
+import net.minecraft.client.gui.screen.Screen
 
-public class ModMenuApiImpl implements ModMenuApi {
-    @Override
-    public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> Config.getConfigBuilder().setParentScreen(parent).build();
+class ModMenuApiImpl : ModMenuApi {
+    override fun getModConfigScreenFactory(): ConfigScreenFactory<*> {
+        return ConfigScreenFactory { parent: Screen? -> Config.configBuilder.setParentScreen(parent).build() }
     }
 }
