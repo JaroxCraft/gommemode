@@ -8,5 +8,6 @@ object Config {
     val configBuilder: ConfigBuilder = ConfigBuilder.create()
         .setTitle(Text.of("Gommemode"))
 
+    @Suppress("unused")
     var generalCategory: ConfigCategory = configBuilder.getOrCreateCategory(Text.of("general"))
 }

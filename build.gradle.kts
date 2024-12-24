@@ -42,20 +42,6 @@ tasks.processResources {
 }
 
 val targetJavaVersion = 21
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible) {
-        options.release.set(targetJavaVersion)
-    }
-}
-
-java {
-    val javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
-    }
-    withSourcesJar()
-}
 
 tasks.jar {
     from("LICENSE") {
@@ -64,7 +50,5 @@ tasks.jar {
 }
 
 kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
-    }
+    jvmToolchain(targetJavaVersion)
 }

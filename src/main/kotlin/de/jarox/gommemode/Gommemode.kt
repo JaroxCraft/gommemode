@@ -24,10 +24,6 @@ import org.lwjgl.glfw.GLFW
 class Gommemode : ModInitializer, ClientModInitializer {
     private var toggleKey: KeyBinding? = null
 
-    init {
-        instance = this
-    }
-
     override fun onInitialize() {
         Registry.register(
             Registries.ENTITY_TYPE,
@@ -70,9 +66,6 @@ class Gommemode : ModInitializer, ClientModInitializer {
     }
 
     companion object {
-
-        lateinit var instance: Gommemode
-
         const val MOD_ID: String = "gommemode"
 
         val GOMME_ENTITY_TYPE: EntityType<GommeEntity?> =
