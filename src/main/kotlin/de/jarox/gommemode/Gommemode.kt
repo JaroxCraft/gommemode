@@ -62,8 +62,10 @@ class Gommemode : ModInitializer, ClientModInitializer {
         lateinit var INSTANCE: Gommemode
 
         const val MOD_ID: String = "gommemode"
+
         val GOMME_ENTITY_TYPE: EntityType<GommeEntity?> =
             EntityType.Builder.create<GommeEntity?>(SpawnGroup.CREATURE).build()
+
         private val GOMMEMODE_SONG: Identifier = Identifier.of(MOD_ID, "song")
         var GOMMEMODE_SOUND_EVENT: SoundEvent = Registry.register(
             Registries.SOUND_EVENT, GOMMEMODE_SONG, SoundEvent.of(
