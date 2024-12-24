@@ -30,7 +30,7 @@ jobs:
 
       - name: Update gradle.properties with SHORT_SHA
         run: |
-          sed -i "s/^version=.*/version=${{ env.MINECRAFT_VERSION }}-${{ env.SHORT_SHA }}/" gradle.properties
+          sed -i "s/^mod_version=.*/mod_version=${{ env.MINECRAFT_VERSION }}-${{ env.SHORT_SHA }}/" gradle.properties
           cat gradle.properties
 
       - name: Build with Gradle
