@@ -2,8 +2,6 @@ name: GitHub Release draft
 
 on:
   push:
-    branches:
-      - master
 
 jobs:
   publish:
