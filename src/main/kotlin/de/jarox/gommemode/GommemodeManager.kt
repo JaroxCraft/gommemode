@@ -18,6 +18,7 @@ object GommemodeManager {
     private val client: MinecraftClient = MinecraftClient.getInstance()
     private var currentSound: SoundInstance? = null
     private var gomme: GommeEntity? = null
+    private var lastToggle: Long = 0
 
     var active = false
         private set
@@ -25,7 +26,9 @@ object GommemodeManager {
     fun isPlaying() = currentSound != null && client.soundManager.isPlaying(currentSound)
 
     fun toggleActive(player: ClientPlayerEntity, world: ClientWorld) {
+        if (lastToggle + (1 * 20) > world.time) return
         if (active) deactivate() else activate(player, world)
+        lastToggle = world.time
     }
 
     private fun activate(player: ClientPlayerEntity, world: ClientWorld) {
