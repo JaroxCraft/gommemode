@@ -24,7 +24,7 @@ jobs:
           key: gradle-cache-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
           restore-keys: gradle-cache-${{ runner.os }}
 
-      - run: echo "SHORT_SHA=${{ github.sha.slice(0, 6) }}" >> $GITHUB_ENV
+      - run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-6)" >> $GITHUB_ENV
 
       - run: sed -i "s/^mod_version=.*/mod_version=${{ env.SHORT_SHA }}/" gradle.properties
 
