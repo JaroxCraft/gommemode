@@ -21,7 +21,8 @@ object GommemodeManager {
 
     var active = false
         private set
-        get() = currentSound != null && client.soundManager.isPlaying(currentSound)
+
+    fun isPlaying() = currentSound != null && client.soundManager.isPlaying(currentSound)
 
     fun toggleActive(player: ClientPlayerEntity, world: ClientWorld) {
         if (active) deactivate() else activate(player, world)

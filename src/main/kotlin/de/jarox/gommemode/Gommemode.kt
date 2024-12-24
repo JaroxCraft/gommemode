@@ -25,7 +25,7 @@ class Gommemode : ModInitializer, ClientModInitializer {
     private var toggleKey: KeyBinding? = null
 
     init {
-        INSTANCE = this
+        instance = this
     }
 
     override fun onInitialize() {
@@ -51,6 +51,10 @@ class Gommemode : ModInitializer, ClientModInitializer {
             )
         )
         ClientTickEvents.END_CLIENT_TICK.register(ClientTickEvents.EndTick { client: MinecraftClient ->
+            if(GommemodeManager.isPlaying() != GommemodeManager.active) {
+                GommemodeManager.toggleActive(client.player!!, client.world!!)
+            }
+
             while (toggleKey!!.wasPressed()) {
                 GommemodeManager.toggleActive(client.player!!, client.world!!)
             }
@@ -59,7 +63,7 @@ class Gommemode : ModInitializer, ClientModInitializer {
 
     companion object {
 
-        lateinit var INSTANCE: Gommemode
+        lateinit var instance: Gommemode
 
         const val MOD_ID: String = "gommemode"
 
