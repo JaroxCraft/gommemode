@@ -28,6 +28,7 @@ jobs:
         run: |
           echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-6)" >> $GITHUB_ENV
           echo "MINECRAFT_VERSION=$(grep 'minecraft_version' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Build with Gradle
         run: ./gradlew build
@@ -43,7 +44,7 @@ jobs:
           draft: true
           prerelease: true
           tag_name: ${{ env.MINECRAFT_VERSION }}-${{ env.SHORT_SHA }}
-          name: "${{ env.MINECRAFT_VERSION }} - ${{ env.SHORT_SHA }}"
+          name: "${{ env.MINECRAFT_VERSION }} - ${{ env.SHORT_SHA }} - ${{ env.BRANCH_NAME }}"
           body: ${{ steps.changelog.outputs.changelogs }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
