@@ -28,6 +28,10 @@ jobs:
           echo "MINECRAFT_VERSION=$(grep 'minecraft_version' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV
           echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
+      - name: Update gradle.properties with SHORT_SHA
+        run: |
+          sed -i "s/^version=.*/version=${{ env.MINECRAFT_VERSION }}-${{ env.SHORT_SHA }}/" gradle.properties
+
       - name: Build with Gradle
         run: ./gradlew build
 
