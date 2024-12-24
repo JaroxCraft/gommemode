@@ -21,7 +21,7 @@ import net.minecraft.sound.SoundEvent
 import net.minecraft.util.Identifier
 import org.lwjgl.glfw.GLFW
 
-class GommeMode : ModInitializer, ClientModInitializer {
+class Gommemode : ModInitializer, ClientModInitializer {
     private var toggleKey: KeyBinding? = null
 
     init {
@@ -59,7 +59,7 @@ class GommeMode : ModInitializer, ClientModInitializer {
 
     companion object {
 
-        lateinit var INSTANCE: GommeMode
+        lateinit var INSTANCE: Gommemode
 
         const val MOD_ID: String = "gommemode"
         val GOMME_ENTITY_TYPE: EntityType<GommeEntity?> =

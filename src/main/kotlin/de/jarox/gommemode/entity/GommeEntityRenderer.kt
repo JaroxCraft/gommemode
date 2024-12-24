@@ -1,6 +1,6 @@
 package de.jarox.gommemode.entity
 
-import de.jarox.gommemode.GommeMode
+import de.jarox.gommemode.Gommemode
 import net.minecraft.client.render.entity.EntityRendererFactory
 import net.minecraft.client.render.entity.LivingEntityRenderer
 import net.minecraft.client.render.entity.model.EntityModelLayers
@@ -14,6 +14,6 @@ class GommeEntityRenderer(ctx: EntityRendererFactory.Context) :
         0.5f
     ) {
     override fun getTexture(entity: GommeEntity?): Identifier {
-        return Identifier.of(GommeMode.MOD_ID, "textures/entity/gommehd.png")
+        return Identifier.of(Gommemode.MOD_ID, "textures/entity/gommehd.png")
     }
 }

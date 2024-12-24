@@ -16,10 +16,10 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "de.jarox.gommemode.GommeMode"
+      "de.jarox.gommemode.Gommemode"
     ],
     "main": [
-      "de.jarox.gommemode.GommeMode"
+      "de.jarox.gommemode.Gommemode"
     ],
     "modmenu": [
       "de.jarox.gommemode.modmenu.ModMenuApiImpl"

@@ -44,7 +44,7 @@ object GommemodeManager {
         val pos = BlockPos(lookPos.x.toInt(), lookPos.y.toInt(), lookPos.z.toInt())
 
         currentSound = PositionedSoundInstance(
-            GommeMode.GOMMEMODE_SOUND_EVENT,
+            Gommemode.GOMMEMODE_SOUND_EVENT,
             SoundCategory.MASTER,
             1f,
             1f,
@@ -55,7 +55,7 @@ object GommemodeManager {
         client.soundManager.play(currentSound)
         spawnSphere(world, lookPos.add(0.0, 0.8, 0.0), 2.0, ParticleTypes.FIREWORK, 0.2)
 
-        gomme = GommeEntity(GommeMode.GOMME_ENTITY_TYPE, world).apply {
+        gomme = GommeEntity(Gommemode.GOMME_ENTITY_TYPE, world).apply {
             setPosition(lookPos)
             world.addEntity(this)
         }
