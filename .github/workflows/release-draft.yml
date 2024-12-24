@@ -24,13 +24,24 @@ jobs:
           key: gradle-cache-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
           restore-keys: gradle-cache-${{ runner.os }}
 
-      - run: sed -i "s/^mod_version=.*/mod_version=${{ github.sha }}/" gradle.properties
+      - run: echo "SHORT_SHA=${{ github.sha.slice(0, 6) }}" >> $GITHUB_ENV
+
+      - run: sed -i "s/^mod_version=.*/mod_version=${{ env.SHORT_SHA }}/" gradle.properties
 
       - run: ./gradlew build
+
+      - name: Generate Changelog
+        id: changelog
+        run: echo "Changelog for commit ${{ env.SHORT_SHA }}:" > changelog.txt && git log --oneline --no-merges HEAD^..HEAD >> changelog.txt
 
       - name: Create Release Draft and Upload JAR
         uses: softprops/action-gh-release@v2
         with:
-          files: build/libs/gommemode-${{ github.sha }}.jar
+          files: build/libs/gommemode-${{ env.SHORT_SHA }}.jar
           draft: true
           prerelease: true
+          tag_name: ${{ env.SHORT_SHA }}
+          release_name: "Release ${{ env.SHORT_SHA }}"
+          body_path: changelog.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
