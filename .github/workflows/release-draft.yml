@@ -30,9 +30,12 @@ jobs:
 
       - run: ./gradlew build
 
-      - name: Generate Changelog
+      - name: Update CHANGELOG
         id: changelog
-        run: echo "Changelog for commit ${{ env.SHORT_SHA }}:" > changelog.txt && git log --oneline --no-merges HEAD^..HEAD >> changelog.txt
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ github.ref_name }}
 
       - name: Create Release Draft and Upload JAR
         uses: softprops/action-gh-release@v2
@@ -42,6 +45,4 @@ jobs:
           prerelease: true
           tag_name: ${{ env.SHORT_SHA }}
           release_name: "Release ${{ env.SHORT_SHA }}"
-          body_path: changelog.txt
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          body: ${{ steps.changelog.outputs.changes }}
