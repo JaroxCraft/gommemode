@@ -51,12 +51,20 @@ class Gommemode : ModInitializer, ClientModInitializer {
             )
         )
         ClientTickEvents.END_CLIENT_TICK.register(ClientTickEvents.EndTick { client: MinecraftClient ->
-            if(GommemodeManager.isPlaying() != GommemodeManager.active) {
-                GommemodeManager.toggleActive(client.player!!, client.world!!)
+            if (GommemodeManager.isPlaying() != GommemodeManager.active) {
+                client.player?.let { player ->
+                    client.world?.let { world ->
+                        GommemodeManager.toggleActive(player, world)
+                    }
+                }
             }
 
             while (toggleKey!!.wasPressed()) {
-                GommemodeManager.toggleActive(client.player!!, client.world!!)
+                client.player?.let { player ->
+                    client.world?.let { world ->
+                        GommemodeManager.toggleActive(player, world)
+                    }
+                }
             }
         })
     }
