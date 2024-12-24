@@ -2,6 +2,8 @@ name: GitHub Release draft
 
 on:
   push:
+    branches:
+      - master
 
 jobs:
   publish:
@@ -22,14 +24,13 @@ jobs:
           key: gradle-cache-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
           restore-keys: gradle-cache-${{ runner.os }}
 
-      - run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-6)" >> $GITHUB_ENV
+      - name: Extract things
+        run: |
+          echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-6)" >> $GITHUB_ENV
+          echo "MINECRAFT_VERSION=$(grep 'minecraft_version' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV
 
-      - run: sed -i "s/^mod_version=.*/mod_version=${{ env.SHORT_SHA }}/" gradle.properties
-
-      - run: ./gradlew build
-
-      - name: Extract Minecraft Version
-        run: echo "MINECRAFT_VERSION=$(grep 'minecraft_version' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV
+      - name: Build with Gradle
+        run: ./gradlew build
 
       - name: Create changelogs
         id: changelog
