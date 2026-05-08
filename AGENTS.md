@@ -58,6 +58,23 @@ All logic flows through two classes:
 
 **`GommeEntityRenderer.kt`** — uses `PlayerModel` + `AvatarRenderState` to render the entity with a custom skin texture (`textures/entity/gommehd.png`). Overrides `createRenderState()` to return a plain `AvatarRenderState()` — player-specific fields (cape, skin type) are left at defaults.
 
+## Commit Style
+
+**ALWAYS use conventional commits** for every commit you create. This includes commits you author yourself and commits you rewrite during merge/rebase operations.
+
+Format: `<type>(<scope>): <description>`
+
+Common types for this project:
+- `feat:` — new feature or behavior
+- `fix:` — bug fix
+- `ci:` — CI/CD changes
+- `docs:` — documentation updates
+- `chore(deps):` — dependency updates (e.g., Gradle, Fabric, Kotlin)
+- `refactor:` — code restructuring without behavior change
+- `build:` — build system or tooling changes
+
+**Never** leave a non-conventional commit message on `master`, even if it comes from an external PR or bot. Amend it during merge/rebase if necessary.
+
 ## Version Management
 
 All dependency versions live in `gradle.properties`. The artifact version is composed as `mod_version+minecraft_version` in `build.gradle.kts`. A GitHub Actions workflow creates a release on every `v*` tag, validating that the tag matches `mod_version+minecraft_version` from `gradle.properties`.
