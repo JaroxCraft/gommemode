@@ -100,9 +100,29 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-.gradle
+.gradle/
 build/
-.kotlin
+.kotlin/
+
+# VS Code
+.vscode/
+
+# Fleet
+.fleet/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Java heap dumps and attach files
+*.hprof
+.attach_pid*
+
+# Vim swap files
+*.swp
+*.swo
+*.swn
 
 # Ignore Gradle GUI config
 gradle-app.setting
