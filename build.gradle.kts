@@ -1,7 +1,14 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    id("fabric-loom") version "1.8-SNAPSHOT"
-    kotlin("jvm") version "2.1.20"
+    id("net.fabricmc.fabric-loom")
+    kotlin("jvm") version "2.3.21"
 }
+
+val minecraftVersion = providers.gradleProperty("minecraft_version").get()
+
+version = "${providers.gradleProperty("mod_version").get()}+$minecraftVersion"
+group = providers.gradleProperty("maven_group").get()
 
 repositories {
     maven { url = uri("https://maven.terraformersmc.com/") }
@@ -9,46 +16,61 @@ repositories {
     mavenCentral()
 }
 
-version = project.property("mod_version") as String
-group = project.property("maven_group") as String
-
-base {
-    archivesName.set(project.property("archives_base_name") as String)
-}
-
 dependencies {
-    minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
-    mappings("net.fabricmc:yarn:${project.property("yarn_mappings")}:v2")
-    modImplementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
-    modImplementation("com.terraformersmc:modmenu:${project.property("modmenu_version")}")
-    modApi("me.shedaniel.cloth:cloth-config-fabric:${project.property("cloth_version")}")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    minecraft("com.mojang:minecraft:$minecraftVersion")
+    implementation("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_version").get()}")
+    implementation("com.terraformersmc:modmenu:${providers.gradleProperty("modmenu_version").get()}")
+    implementation("me.shedaniel.cloth:cloth-config-fabric:${providers.gradleProperty("cloth_version").get()}")
+    implementation(kotlin("stdlib"))
 }
 
 tasks.processResources {
-    inputs.property("version", project.version)
-    inputs.property("minecraft_version", project.property("minecraft_version"))
-    inputs.property("loader_version", project.property("loader_version"))
+    val props = mapOf(
+        "version" to project.version,
+        "minecraft_version" to minecraftVersion,
+        "loader_version" to providers.gradleProperty("loader_version").get()
+    )
+    inputs.properties(props)
     filteringCharset = "UTF-8"
-
     filesMatching("fabric.mod.json") {
-        expand(
-            "version" to project.version,
-            "minecraft_version" to project.property("minecraft_version"),
-            "loader_version" to project.property("loader_version")
-        )
+        expand(props)
     }
 }
 
-val targetJavaVersion = 21
-
-tasks.jar {
-    from("LICENSE") {
-        rename { "${it}_${project.property("archives_base_name")}" }
-    }
+tasks.withType<JavaCompile>().configureEach {
+    options.release = 25
 }
 
 kotlin {
-    jvmToolchain(targetJavaVersion)
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_25
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+}
+
+val localMods by configurations.creating { isTransitive = false }
+
+dependencies {
+    localMods("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
+}
+
+tasks.register<Copy>("downloadLocalMods") {
+    from(localMods)
+    into(layout.projectDirectory.dir("run/mods"))
+}
+
+tasks.named("runClient") {
+    dependsOn("downloadLocalMods")
+}
+
+tasks.jar {
+    from("LICENSE") {
+        rename { "${it}_${project.name}" }
+    }
 }
