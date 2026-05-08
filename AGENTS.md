@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI agents when working with code in this repository.
 
 ## Project
 
@@ -21,7 +21,7 @@ There are no tests. The only way to verify correctness is to run the client.
 - Plugin ID is `net.fabricmc.fabric-loom` (not `fabric-loom` or `remap` variants)
 - No `mappings()` declaration in `build.gradle.kts` at all
 - No `modImplementation` / `modApi` — use plain `implementation()` for all deps
-- `kotlin("stdlib")` must be listed as `implementation()` so it's bundled in the jar (not provided by Minecraft)
+- `fabric-language-kotlin` is declared as a mod dependency (not bundled); it must be present at runtime
 - Java 25 is required (`sourceCompatibility`, `jvmTarget`, Gradle JVM)
 - Gradle 9.4.1+ required (Loom 1.16 requires Gradle 9.x)
 
@@ -60,4 +60,4 @@ All logic flows through two classes:
 
 ## Version Management
 
-All dependency versions live in `gradle.properties`. The artifact version is composed as `mod_version+minecraft_version` in `build.gradle.kts`. To release: bump `mod_version` in `gradle.properties` and push a `v*` tag.
+All dependency versions live in `gradle.properties`. The artifact version is composed as `mod_version+minecraft_version` in `build.gradle.kts`. A GitHub Actions workflow creates a release on every `v*` tag, validating that the tag matches `mod_version+minecraft_version` from `gradle.properties`.
