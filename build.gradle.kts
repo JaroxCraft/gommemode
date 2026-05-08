@@ -22,14 +22,15 @@ dependencies {
     implementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_version").get()}")
     implementation("com.terraformersmc:modmenu:${providers.gradleProperty("modmenu_version").get()}")
     implementation("me.shedaniel.cloth:cloth-config-fabric:${providers.gradleProperty("cloth_version").get()}")
-    implementation(kotlin("stdlib"))
+    implementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
 }
 
 tasks.processResources {
     val props = mapOf(
         "version" to project.version,
         "minecraft_version" to minecraftVersion,
-        "loader_version" to providers.gradleProperty("loader_version").get()
+        "loader_version" to providers.gradleProperty("loader_version").get(),
+        "fabric_kotlin_version" to providers.gradleProperty("fabric_kotlin_version").get()
     )
     inputs.properties(props)
     filteringCharset = "UTF-8"
@@ -52,21 +53,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_25
     targetCompatibility = JavaVersion.VERSION_25
     withSourcesJar()
-}
-
-val localMods by configurations.creating { isTransitive = false }
-
-dependencies {
-    localMods("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
-}
-
-tasks.register<Copy>("downloadLocalMods") {
-    from(localMods)
-    into(layout.projectDirectory.dir("run/mods"))
-}
-
-tasks.named("runClient") {
-    dependsOn("downloadLocalMods")
 }
 
 tasks.jar {
