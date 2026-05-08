@@ -2,20 +2,21 @@ package de.jarox.gommemode
 
 import de.jarox.gommemode.entity.GommeEntity
 import de.jarox.gommemode.util.spawnSphere
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.network.ClientPlayerEntity
-import net.minecraft.client.sound.PositionedSoundInstance
-import net.minecraft.client.sound.SoundInstance
-import net.minecraft.client.world.ClientWorld
-import net.minecraft.entity.Entity
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.particle.ParticleTypes
-import net.minecraft.sound.SoundCategory
-import net.minecraft.util.math.BlockPos
-import net.minecraft.util.math.random.Random
+import net.minecraft.client.Minecraft
+import net.minecraft.client.multiplayer.ClientLevel
+import net.minecraft.client.player.LocalPlayer
+import net.minecraft.client.resources.sounds.SimpleSoundInstance
+import net.minecraft.client.resources.sounds.SoundInstance
+import net.minecraft.core.BlockPos
+import net.minecraft.core.particles.ParticleTypes
+import net.minecraft.sounds.SoundSource
+import net.minecraft.util.RandomSource
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.player.Player
+import net.minecraft.world.phys.Vec3
 
 object GommemodeManager {
-    private val client: MinecraftClient = MinecraftClient.getInstance()
+    private val client: Minecraft = Minecraft.getInstance()
     private var currentSound: SoundInstance? = null
     private var gomme: GommeEntity? = null
     private var lastToggle: Long = 0
@@ -23,15 +24,18 @@ object GommemodeManager {
     var active = false
         private set
 
-    fun isPlaying() = currentSound != null && client.soundManager.isPlaying(currentSound)
-
-    fun toggleActive(player: ClientPlayerEntity, world: ClientWorld) {
-        if (lastToggle + (1 * 20) > world.time) return
-        if (active) deactivate() else activate(player, world)
-        lastToggle = world.time
+    fun isPlaying(): Boolean {
+        val sound = currentSound
+        return sound != null && client.soundManager.isActive(sound)
     }
 
-    private fun activate(player: ClientPlayerEntity, world: ClientWorld) {
+    fun toggleActive(player: LocalPlayer, world: ClientLevel) {
+        if (lastToggle + (1 * 20) > world.gameTime) return
+        if (active) deactivate() else activate(player, world)
+        lastToggle = world.gameTime
+    }
+
+    private fun activate(player: LocalPlayer, world: ClientLevel) {
         if (active) return
         active = true
         start(player, world)
@@ -43,30 +47,36 @@ object GommemodeManager {
         stop()
     }
 
-    private fun start(player: PlayerEntity, world: ClientWorld) {
-        val lookPos = player.raycast(5.0, 0f, false).pos
+    private fun start(player: Player, world: ClientLevel) {
+        val lookPos = player.pick(5.0, 0f, false).location
         val pos = BlockPos(lookPos.x.toInt(), lookPos.y.toInt(), lookPos.z.toInt())
 
-        currentSound = PositionedSoundInstance(
-            Gommemode.GOMMEMODE_SOUND_EVENT,
-            SoundCategory.MASTER,
+        currentSound = SimpleSoundInstance(
+            Gommemode.GOMMEMODE_SOUND_EVENT.location(),
+            SoundSource.MASTER,
             1f,
             1f,
-            Random.create(),
-            pos
+            RandomSource.create(),
+            false,
+            0,
+            SoundInstance.Attenuation.LINEAR,
+            pos.x + 0.5,
+            pos.y + 0.5,
+            pos.z + 0.5,
+            false
         )
 
-        client.soundManager.play(currentSound)
+        client.soundManager.play(currentSound!!)
         spawnSphere(world, lookPos.add(0.0, 0.8, 0.0), 2.0, ParticleTypes.FIREWORK, 0.2)
 
         gomme = GommeEntity(Gommemode.GOMME_ENTITY_TYPE, world).apply {
-            setPosition(lookPos)
+            setPos(lookPos.x, lookPos.y, lookPos.z)
             world.addEntity(this)
         }
     }
 
     private fun stop() {
-        client.soundManager.stop(currentSound)
+        client.soundManager.stop(currentSound!!)
         gomme?.remove(Entity.RemovalReason.KILLED)
     }
 }
