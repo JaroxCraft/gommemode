@@ -29,20 +29,20 @@ There are no tests. The only way to verify correctness is to run the client.
 
 Key renames from older Yarn-mapped code that are easy to get wrong:
 
-| Old (Yarn / pre-26.1) | Current (Mojang / 26.1) |
-|---|---|
-| `ResourceLocation` | `Identifier` (`net.minecraft.resources.Identifier`) |
-| `KeyBindingHelper` | `KeyMappingHelper` (`net.fabricmc.fabric.api.client.keymapping.v1`) |
-| `KeyBinding` category as `String` | `KeyMapping.Category` — create with `KeyMapping.Category.register(Identifier)` |
-| `LivingEntityRenderer<T, M>` | `LivingEntityRenderer<T, S : LivingEntityRenderState, M : EntityModel<? super S>>` — 3 type params |
-| `PlayerModel<T>` (generic) | `PlayerModel` (no type param, extends `HumanoidModel<AvatarRenderState>`) |
-| `getTextureLocation(entity: T)` | `getTextureLocation(state: S): Identifier` — takes render state |
-| `EntityType.Builder.build()` | `.build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier))` |
-| `SoundEvent.location` (field) | `SoundEvent.location()` (method) |
-| `SoundInstance` at `client.sounds` | `net.minecraft.client.resources.sounds.SoundInstance` |
-| `PlayerModel` at `client.model` | `net.minecraft.client.model.player.PlayerModel` |
-| `LivingEntityFeatureRendererRegistrationCallback` | `LivingEntityRenderLayerRegistrationCallback` |
-| `EntityModelLayerRegistry` | `ModelLayerRegistry` |
+| Old (Yarn / pre-26.1)                             | Current (Mojang / 26.1)                                                                            |
+|---------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| `ResourceLocation`                                | `Identifier` (`net.minecraft.resources.Identifier`)                                                |
+| `KeyBindingHelper`                                | `KeyMappingHelper` (`net.fabricmc.fabric.api.client.keymapping.v1`)                                |
+| `KeyBinding` category as `String`                 | `KeyMapping.Category` — create with `KeyMapping.Category.register(Identifier)`                     |
+| `LivingEntityRenderer<T, M>`                      | `LivingEntityRenderer<T, S : LivingEntityRenderState, M : EntityModel<? super S>>` — 3 type params |
+| `PlayerModel<T>` (generic)                        | `PlayerModel` (no type param, extends `HumanoidModel<AvatarRenderState>`)                          |
+| `getTextureLocation(entity: T)`                   | `getTextureL ocation(state: S): Identifier` — takes render state                                   |
+| `EntityType.Builder.build()`                      | `.build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier))`                                   |
+| `SoundEvent.location` (field)                     | `SoundEvent.location()` (method)                                                                   |
+| `SoundInstance` at `client.sounds`                | `net.minecraft.client.resources.sounds.SoundInstance`                                              |
+| `PlayerModel` at `client.model`                   | `net.minecraft.client.model.player.PlayerModel`                                                    |
+| `LivingEntityFeatureRendererRegistrationCallback` | `LivingEntityRenderLayerRegistrationCallback`                                                      |
+| `EntityModelLayerRegistry`                        | `ModelLayerRegistry`                                                                               |
 
 `createRenderState()` is abstract in `EntityRenderer` and **must** be overridden in custom renderers.
 
