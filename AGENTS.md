@@ -58,6 +58,10 @@ All logic flows through two classes:
 
 **`GommeEntityRenderer.kt`** — uses `PlayerModel` + `AvatarRenderState` to render the entity with a custom skin texture (`textures/entity/gommehd.png`). Overrides `createRenderState()` to return a plain `AvatarRenderState()` — player-specific fields (cape, skin type) are left at defaults.
 
+## Agent Behavior
+
+**Never push changes to the remote repository unless explicitly asked to do so.** Always ask for confirmation before running `git push`, `git push --force`, or any other command that mutates the remote history. This applies even when the user previously gave permission in an earlier conversation.
+
 ## Commit Style
 
 **ALWAYS use conventional commits** for every commit you create. This includes commits you author yourself and commits you rewrite during merge/rebase operations.
