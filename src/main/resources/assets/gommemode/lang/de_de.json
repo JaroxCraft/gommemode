@@ -1,0 +1,10 @@
+{
+  "gommemode.change": "Der Gommemode wurde ",
+  "gommemode.stopped": "deaktiviert",
+  "gommemode.started": "aktiviert",
+  "gommemode.already_active": "Der Gommemode ist bereits aktiv.",
+  "gommemode.already_inactive": "Der Gommemode ist bereits inaktiv.",
+  "key.category.gommemode.general": "Gommemode",
+  "key.gommemode.toggle": "Gommemode umschalten",
+  "entity.gommemode.gomme": "GommeHD"
+}
