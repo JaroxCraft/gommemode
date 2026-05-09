@@ -6,12 +6,23 @@
   ],
   "packageRules": [
     {
-      "matchPackageNames": ["com.mojang:minecraft"],
-      "registryUrls": ["https://libraries.minecraft.net/"]
+      "matchPackageNames": ["net.fabricmc{/,}**"],
+      "registryUrls": ["https://maven.fabricmc.net/"]
     },
     {
-      "matchPackagePrefixes": ["net.fabricmc"],
-      "registryUrls": ["https://maven.fabricmc.net/"]
+      "matchDepNames": ["minecraft"],
+      "matchDatasources": ["json"],
+      "allowedVersions": "/^\\d+(\\.\\d+)+$/"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^gradle/libs.versions.toml$"],
+      "matchStrings": ["minecraft = \"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "minecraft",
+      "datasourceTemplate": "json",
+      "registryUrlTemplate": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
     }
   ]
 }
