@@ -23,8 +23,9 @@ fun spawnSphere(
     particleType: ParticleOptions,
     stepSize: Double,
 ) {
-    val phiSteps = (PI / stepSize).toInt()
-    val thetaSteps = (2 * PI / stepSize).toInt()
+    require(stepSize.isFinite() && stepSize > 0.0) { "stepSize must be finite and > 0, was: $stepSize" }
+    val phiSteps = (PI / stepSize).toInt().coerceAtLeast(1)
+    val thetaSteps = (2 * PI / stepSize).toInt().coerceAtLeast(1)
 
     for (phiIndex in 0..phiSteps) {
         val phi = phiIndex * stepSize
