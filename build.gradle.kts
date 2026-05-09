@@ -1,11 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("net.fabricmc.fabric-loom")
-    kotlin("jvm") version "2.3.21"
+    alias(libs.plugins.fabric.loom)
+    alias(libs.plugins.kotlin.jvm)
 }
 
-val minecraftVersion = providers.gradleProperty("minecraft_version").get()
+val minecraftVersion = libs.versions.minecraft.get()
 
 version = "${providers.gradleProperty("mod_version").get()}+$minecraftVersion"
 group = providers.gradleProperty("maven_group").get()
@@ -17,20 +17,20 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:$minecraftVersion")
-    implementation("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
-    implementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_version").get()}")
-    implementation("com.terraformersmc:modmenu:${providers.gradleProperty("modmenu_version").get()}")
-    implementation("me.shedaniel.cloth:cloth-config-fabric:${providers.gradleProperty("cloth_version").get()}")
-    implementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
+    minecraft(libs.minecraft)
+    implementation(libs.fabric.loader)
+    implementation(libs.fabric.api)
+    implementation(libs.modmenu)
+    implementation(libs.cloth.config)
+    implementation(libs.fabric.language.kotlin)
 }
 
 tasks.processResources {
     val props = mapOf(
         "version" to project.version,
         "minecraft_version" to minecraftVersion,
-        "loader_version" to providers.gradleProperty("loader_version").get(),
-        "fabric_kotlin_version" to providers.gradleProperty("fabric_kotlin_version").get()
+        "loader_version" to libs.versions.loader.get(),
+        "fabric_kotlin_version" to libs.versions.fabric.language.kotlin.get()
     )
     inputs.properties(props)
     filteringCharset = "UTF-8"

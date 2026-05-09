@@ -9,10 +9,10 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+}
 
-    plugins {
-        id("net.fabricmc.fabric-loom") version providers.gradleProperty("loom_version")
-    }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.9.0"
 }
 
 rootProject.name = "gommemode"

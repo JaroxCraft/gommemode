@@ -81,4 +81,4 @@ Common types for this project:
 
 ## Version Management
 
-All dependency versions live in `gradle.properties`. The artifact version is composed as `mod_version+minecraft_version` in `build.gradle.kts`. A GitHub Actions workflow creates a release on every `v*` tag, validating that the tag matches `mod_version+minecraft_version` from `gradle.properties`.
+All dependency versions live in `gradle/libs.versions.toml`. The artifact version is composed as `mod_version+minecraft_version` in `build.gradle.kts`. A GitHub Actions workflow creates a release on every `v*` tag, validating that the tag matches `mod_version+minecraft_version` from `gradle.properties`.

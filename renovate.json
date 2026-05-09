@@ -3,47 +3,5 @@
   "extends": [
     "config:recommended",
     ":disableDependencyDashboard"
-  ],
-  "schedule": [
-    "every 3 days before 9am"
-  ],
-  "gradle": {
-    "fileMatch": [
-      "build.gradle.kts",
-      "gradle.properties"
-    ]
-  },
-  "packageRules": [
-    {
-      "description": "Group tightly-coupled Fabric ecosystem dependencies",
-      "groupName": "fabric-core",
-      "matchPackageNames": [
-        "com.mojang:minecraft",
-        "net.fabricmc:fabric-loader",
-        "net.fabricmc.fabric-api:fabric-api",
-        "net.fabricmc:fabric-language-kotlin"
-      ]
-    },
-    {
-      "description": "Ignore Loom SNAPSHOT to avoid unstable updates",
-      "matchPackageNames": [
-        "net.fabricmc.fabric-loom"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "ModMenu updates",
-      "groupName": "modmenu",
-      "matchPackageNames": [
-        "com.terraformersmc:modmenu"
-      ]
-    },
-    {
-      "description": "Cloth Config updates",
-      "groupName": "cloth-config",
-      "matchPackageNames": [
-        "me.shedaniel.cloth:cloth-config-fabric"
-      ]
-    }
   ]
 }
