@@ -25,18 +25,18 @@ fun spawnSphere(
 ) {
     require(stepSize.isFinite() && stepSize > 0.0) { "stepSize must be finite and > 0, was: $stepSize" }
 
-    val MAX_STEPS = 360
-    val PARTICLE_BUDGET = 10000
+    val maxSteps = 360
+    val particleBudget = 10000
 
     val phiStepsRaw = (PI / stepSize).toInt().coerceAtLeast(1)
     val thetaStepsRaw = (2 * PI / stepSize).toInt().coerceAtLeast(1)
 
-    var phiSteps = minOf(phiStepsRaw, MAX_STEPS)
-    var thetaSteps = minOf(thetaStepsRaw, MAX_STEPS)
+    var phiSteps = minOf(phiStepsRaw, maxSteps)
+    var thetaSteps = minOf(thetaStepsRaw, maxSteps)
 
     val totalParticles = (phiSteps + 1) * (thetaSteps + 1)
-    if (totalParticles > PARTICLE_BUDGET) {
-        val scale = kotlin.math.sqrt(PARTICLE_BUDGET.toDouble() / totalParticles)
+    if (totalParticles > particleBudget) {
+        val scale = kotlin.math.sqrt(particleBudget.toDouble() / totalParticles)
         phiSteps = (phiSteps * scale).toInt().coerceAtLeast(1)
         thetaSteps = (thetaSteps * scale).toInt().coerceAtLeast(1)
     }

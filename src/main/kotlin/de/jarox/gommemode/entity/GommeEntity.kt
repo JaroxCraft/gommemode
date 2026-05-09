@@ -22,10 +22,11 @@ class GommeEntity(
 ) : LivingEntity(entityType, level) {
     private val diamondSword: ItemStack = ItemStack(Items.DIAMOND_SWORD)
 
-    override fun getItemBySlot(slot: EquipmentSlot): ItemStack = when (slot) {
-        EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND -> diamondSword
-        else -> ItemStack.EMPTY
-    }
+    override fun getItemBySlot(slot: EquipmentSlot): ItemStack =
+        when (slot) {
+            EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND -> diamondSword
+            else -> ItemStack.EMPTY
+        }
 
     override fun setItemSlot(
         slot: EquipmentSlot,
@@ -33,6 +34,7 @@ class GommeEntity(
     ) {
         // Intentionally no-op: this entity's equipment is managed by getItemBySlot
     }
+
     override fun getMainArm(): HumanoidArm = HumanoidArm.RIGHT
 
     override fun baseTick() {
