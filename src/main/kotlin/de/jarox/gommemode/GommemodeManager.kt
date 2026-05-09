@@ -7,76 +7,138 @@ import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.client.resources.sounds.SoundInstance
-import net.minecraft.core.BlockPos
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.RandomSource
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.player.Player
-import net.minecraft.world.phys.Vec3
 
+/**
+ * Manages the activation state of the Gommemode, including sound playback,
+ * entity spawning, and particle effects.
+ *
+ * This singleton coordinates the lifecycle of the Gomme entity and its
+ * associated sound effects.
+ */
 object GommemodeManager {
-    private val client: Minecraft = Minecraft.getInstance()
-    private var currentSound: SoundInstance? = null
-    private var gomme: GommeEntity? = null
-    private var lastToggle: Long = 0
+    private val minecraft: Minecraft = Minecraft.getInstance()
+    private var activeSound: SoundInstance? = null
+    private var gommeEntity: GommeEntity? = null
+    private var lastToggleTick: Long = 0L
 
-    var active = false
+    private const val COOLDOWN_TICKS: Long = 20L // 1 second at 20 ticks/second
+    private const val SPAWN_RADIUS: Double = 2.0
+    private const val PARTICLE_DENSITY: Double = 0.2
+    private const val LOOK_DISTANCE: Double = 5.0
+
+    var isActive: Boolean = false
         private set
 
+    /**
+     * Resets all state when disconnecting from a world.
+     * Ensures no stale references or cooldown times carry over to a new world.
+     */
+    fun reset() {
+        if (isActive) {
+            stopSongAndRemoveEntity()
+            isActive = false
+        }
+        lastToggleTick = 0L
+        activeSound = null
+        gommeEntity = null
+    }
+
+    /**
+     * Checks whether the background song is currently playing.
+     *
+     * @return true if the sound is active, false otherwise
+     */
     fun isPlaying(): Boolean {
-        val sound = currentSound
-        return sound != null && client.soundManager.isActive(sound)
+        val sound = activeSound
+        return sound != null && minecraft.soundManager.isActive(sound)
     }
 
-    fun toggleActive(player: LocalPlayer, world: ClientLevel) {
-        if (lastToggle + (1 * 20) > world.gameTime) return
-        if (active) deactivate() else activate(player, world)
-        lastToggle = world.gameTime
+    /**
+     * Toggles the mod activation state with a cooldown to prevent rapid toggling.
+     *
+     * @param player The local player initiating the toggle
+     * @param level The client world
+     */
+    fun toggleActive(
+        player: LocalPlayer,
+        level: ClientLevel,
+    ) {
+        if (level.gameTime < lastToggleTick + COOLDOWN_TICKS) return
+
+        if (isActive) {
+            deactivate()
+        } else {
+            activate(player, level)
+        }
+        lastToggleTick = level.gameTime
     }
 
-    private fun activate(player: LocalPlayer, world: ClientLevel) {
-        if (active) return
-        active = true
-        start(player, world)
+    private fun activate(
+        player: LocalPlayer,
+        level: ClientLevel,
+    ) {
+        if (isActive) return
+        isActive = true
+        startSongAndSpawnEntity(player, level)
     }
 
     private fun deactivate() {
-        if (!active) return
-        active = false
-        stop()
+        if (!isActive) return
+        isActive = false
+        stopSongAndRemoveEntity()
     }
 
-    private fun start(player: Player, world: ClientLevel) {
-        val lookPos = player.pick(5.0, 0f, false).location
-        val pos = BlockPos(lookPos.x.toInt(), lookPos.y.toInt(), lookPos.z.toInt())
+    private fun startSongAndSpawnEntity(
+        player: LocalPlayer,
+        level: ClientLevel,
+    ) {
+        val hitResult = player.pick(LOOK_DISTANCE, 0f, false)
+        val spawnLocation = hitResult.location
 
-        currentSound = SimpleSoundInstance(
-            Gommemode.GOMMEMODE_SOUND_EVENT.location(),
-            SoundSource.MASTER,
-            1f,
-            1f,
-            RandomSource.create(),
-            false,
-            0,
-            SoundInstance.Attenuation.LINEAR,
-            pos.x + 0.5,
-            pos.y + 0.5,
-            pos.z + 0.5,
-            false
+        activeSound =
+            SimpleSoundInstance(
+                Gommemode.GOMMEMODE_SOUND_EVENT,
+                SoundSource.MASTER,
+                1f,
+                1f,
+                RandomSource.create(),
+                spawnLocation.x,
+                spawnLocation.y,
+                spawnLocation.z,
+            )
+
+        activeSound?.let { sound ->
+            minecraft.soundManager.play(sound)
+        }
+
+        spawnSphere(
+            level = level,
+            center = spawnLocation,
+            radius = SPAWN_RADIUS,
+            particleType = ParticleTypes.FIREWORK,
+            stepSize = PARTICLE_DENSITY,
         )
 
-        client.soundManager.play(currentSound!!)
-        spawnSphere(world, lookPos.add(0.0, 0.8, 0.0), 2.0, ParticleTypes.FIREWORK, 0.2)
+        val newEntity = GommeEntity(Gommemode.GOMME_ENTITY_TYPE, level)
+        newEntity.setPos(spawnLocation.x, spawnLocation.y, spawnLocation.z)
 
-        gomme = GommeEntity(Gommemode.GOMME_ENTITY_TYPE, world).apply {
-            setPos(lookPos.x, lookPos.y, lookPos.z)
-            world.addEntity(this)
-        }
+        level.addEntity(newEntity)
+        gommeEntity = newEntity
     }
 
-    private fun stop() {
-        client.soundManager.stop(currentSound!!)
-        gomme?.remove(Entity.RemovalReason.KILLED)
+    private fun stopSongAndRemoveEntity() {
+        activeSound?.let { sound ->
+            minecraft.soundManager.stop(sound)
+            activeSound = null
+        }
+
+        gommeEntity?.let { entity ->
+            entity.remove(Entity.RemovalReason.DISCARDED)
+            gommeEntity = null
+        }
     }
 }
