@@ -39,7 +39,7 @@ jobs:
           fi
 
           PROPS_MOD=$(grep '^mod_version=' gradle.properties | cut -d= -f2)
-          PROPS_MC=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)
+          PROPS_MC=$(grep '^minecraft =' gradle/libs.versions.toml | sed 's/.*= *"\(.*\)".*/\1/')
 
           echo "Tag:        v${MOD_VER}+${MC_VER}"
           echo "Properties: ${PROPS_MOD}+${PROPS_MC}"
@@ -47,7 +47,8 @@ jobs:
           if [ "$MOD_VER" != "$PROPS_MOD" ] || [ "$MC_VER" != "$PROPS_MC" ]; then
             echo "::error::Tag version does not match project versions."
             echo "  Tag says:      ${MOD_VER}+${MC_VER}"
-            echo "  gradle.properties: mod_version=${PROPS_MOD}, minecraft_version=${PROPS_MC}"
+            echo "  gradle.properties: mod_version=${PROPS_MOD}"
+            echo "  libs.versions.toml: minecraft=${PROPS_MC}"
             echo "Bump versions first, then re-tag."
             exit 1
           fi
@@ -63,6 +64,11 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: Publish to Modrinth
+        run: ./gradlew modrinth
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3

@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.fabric.loom)
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.modrinth.minotaur)
 }
 
 val minecraftVersion = libs.versions.minecraft.get()
@@ -58,5 +59,19 @@ java {
 tasks.jar {
     from("LICENSE") {
         rename { "${it}_${project.name}" }
+    }
+}
+
+modrinth {
+    token.set(System.getenv("MODRINTH_TOKEN"))
+    projectId.set("gommemode")
+    versionNumber.set(project.version.toString())
+    versionType.set(if (project.version.toString().contains("-")) "beta" else "release")
+    uploadFile.set(tasks.jar)
+    gameVersions.addAll(libs.versions.minecraft.get())
+    loaders.add("fabric")
+    dependencies {
+        required.project("fabric-api")
+        required.project("fabric-language-kotlin")
     }
 }
