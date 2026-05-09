@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    minecraft(libs.minecraft)
+    minecraft("com.mojang:minecraft:${libs.versions.minecraft.get()}")
     implementation(libs.fabric.loader)
     implementation(libs.fabric.api)
     implementation(libs.modmenu)

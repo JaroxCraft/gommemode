@@ -4,14 +4,54 @@
     "config:recommended",
     ":disableDependencyDashboard"
   ],
+  "ignoreDeps": [
+    "com.mojang:minecraft"
+  ],
+  "customDatasources": {
+    "minecraft": {
+      "defaultRegistryUrlTemplate": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+      "format": "json",
+      "transformTemplates": [
+        "{ \"releases\": versions[type='release'].{ \"version\": id, \"releaseTimestamp\": releaseTime } }"
+      ]
+    }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^gradle/libs\\.versions\\.toml$"],
+      "matchStrings": ["minecraft = \"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "minecraft",
+      "versioningTemplate": "semver-coerced",
+      "datasourceTemplate": "custom.minecraft"
+    }
+  ],
   "packageRules": [
     {
-      "matchPackageNames": ["com.mojang:minecraft"],
-      "registryUrls": ["https://libraries.minecraft.net/"]
-    },
-    {
+      "description": "Fabric Maven registry",
       "matchPackagePrefixes": ["net.fabricmc"],
       "registryUrls": ["https://maven.fabricmc.net/"]
+    },
+    {
+      "description": "TerraformersMC registry for modmenu",
+      "matchPackageNames": ["com.terraformersmc:modmenu"],
+      "registryUrls": ["https://maven.terraformersmc.com/"]
+    },
+    {
+      "description": "Shedaniel registry for cloth-config",
+      "matchPackageNames": ["me.shedaniel.cloth:cloth-config-fabric"],
+      "registryUrls": ["https://maven.shedaniel.me/"]
+    },
+    {
+      "description": "Minecraft updates are notification-only",
+      "matchPackageNames": ["minecraft"],
+      "draftPR": true,
+      "labels": ["minecraft-update", "manual-action-required"]
+    },
+    {
+      "description": "Fabric API bugfixes can be merged directly",
+      "matchPackageNames": ["net.fabricmc.fabric-api:fabric-api"],
+      "labels": ["dependencies"]
     }
   ]
 }
