@@ -10,20 +10,42 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.Level
 
-class GommeEntity(entityType: EntityType<out LivingEntity>, world: Level) : LivingEntity(entityType, world) {
-    override fun getItemBySlot(slot: EquipmentSlot): ItemStack = ItemStack(Items.DIAMOND_SWORD)
-    override fun setItemSlot(slot: EquipmentSlot, stack: ItemStack) {}
+/**
+ * A custom living entity that always holds a diamond sword and faces the local player.
+ *
+ * @param entityType The entity type for this entity
+ * @param level The world this entity exists in
+ */
+class GommeEntity(
+    entityType: EntityType<out LivingEntity>,
+    level: Level,
+) : LivingEntity(entityType, level) {
+    private val diamondSword: ItemStack = ItemStack(Items.DIAMOND_SWORD)
+
+    override fun getItemBySlot(slot: EquipmentSlot): ItemStack = diamondSword
+
+    override fun setItemSlot(
+        slot: EquipmentSlot,
+        stack: ItemStack,
+    ) {
+        // Intentionally no-op: this entity always holds a diamond sword
+    }
+
     override fun getMainArm(): HumanoidArm = HumanoidArm.RIGHT
 
     override fun baseTick() {
         super.baseTick()
-        lookAtPlayer()
+        faceLocalPlayer()
     }
 
-    private fun lookAtPlayer() {
-        if (level().isClientSide) {
-            val player = Minecraft.getInstance().player ?: return
-            this.lookAt(EntityAnchorArgument.Anchor.FEET, player.position())
-        }
+    /**
+     * Rotates this entity to face the local player's feet position.
+     * Only executes on the client side where the player reference is available.
+     */
+    private fun faceLocalPlayer() {
+        if (!level().isClientSide) return
+
+        val player = Minecraft.getInstance().player ?: return
+        lookAt(EntityAnchorArgument.Anchor.FEET, player.position())
     }
 }
