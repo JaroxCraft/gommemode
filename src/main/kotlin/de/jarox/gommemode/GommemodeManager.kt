@@ -38,13 +38,9 @@ object GommemodeManager {
      * Ensures no stale references or cooldown times carry over to a new world.
      */
     fun reset() {
-        if (isActive) {
-            stopSongAndRemoveEntity()
-            isActive = false
-        }
+        stopSongAndRemoveEntity()
+        isActive = false
         lastToggleTick = 0L
-        activeSound = null
-        gommeEntity = null
     }
 
     /**
