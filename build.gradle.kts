@@ -33,7 +33,9 @@ tasks.processResources {
             "version" to project.version,
             "minecraft_version" to minecraftVersion,
             "loader_version" to libs.versions.loader.get(),
-            "fabric_kotlin_version" to libs.versions.fabric.language.kotlin.get(),
+            "fabric_kotlin_version" to
+                libs.versions.fabric.language.kotlin
+                    .get(),
         )
     inputs.properties(props)
     filteringCharset = "UTF-8"

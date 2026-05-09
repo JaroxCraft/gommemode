@@ -19,7 +19,8 @@ object Config {
      */
     fun buildScreen(parentScreen: Screen?): Screen {
         val builder =
-            ConfigBuilder.create()
+            ConfigBuilder
+                .create()
                 .setParentScreen(parentScreen)
                 .setTitle(Component.literal("Gommemode"))
 

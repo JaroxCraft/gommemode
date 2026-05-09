@@ -30,7 +30,9 @@ import org.lwjgl.glfw.GLFW
  * Implements both [ModInitializer] for server-side initialization
  * and [ClientModInitializer] for client-side setup.
  */
-class Gommemode : ModInitializer, ClientModInitializer {
+class Gommemode :
+    ModInitializer,
+    ClientModInitializer {
     private var toggleKeyMapping: KeyMapping? = null
 
     override fun onInitialize() {
@@ -109,10 +111,11 @@ class Gommemode : ModInitializer, ClientModInitializer {
         const val MOD_ID: String = "gommemode"
 
         val GOMME_ENTITY_TYPE: EntityType<GommeEntity> =
-            EntityType.Builder.of(
-                { entityType, level -> GommeEntity(entityType, level) },
-                MobCategory.CREATURE,
-            ).build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(MOD_ID, "gomme")))
+            EntityType.Builder
+                .of(
+                    { entityType, level -> GommeEntity(entityType, level) },
+                    MobCategory.CREATURE,
+                ).build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(MOD_ID, "gomme")))
 
         val GOMMEMODE_SONG_IDENTIFIER: Identifier =
             Identifier.fromNamespaceAndPath(MOD_ID, "song")

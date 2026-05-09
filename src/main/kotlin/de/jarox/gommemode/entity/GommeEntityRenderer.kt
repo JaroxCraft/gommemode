@@ -8,8 +8,9 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState
 import net.minecraft.resources.Identifier
 
-class GommeEntityRenderer(context: EntityRendererProvider.Context) :
-    LivingEntityRenderer<GommeEntity, HumanoidRenderState, HumanoidModel<HumanoidRenderState>>(
+class GommeEntityRenderer(
+    context: EntityRendererProvider.Context,
+) : LivingEntityRenderer<GommeEntity, HumanoidRenderState, HumanoidModel<HumanoidRenderState>>(
         context,
         HumanoidModel(context.bakeLayer(ModelLayers.PLAYER)),
         0.5f,
