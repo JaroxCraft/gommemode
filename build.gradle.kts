@@ -70,6 +70,7 @@ modrinth {
     uploadFile.set(tasks.jar)
     gameVersions.addAll(libs.versions.minecraft.get())
     loaders.add("fabric")
+    syncBodyFrom.set(project.file("README.md").readText())
     dependencies {
         required.project("fabric-api")
         required.project("fabric-language-kotlin")
