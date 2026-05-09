@@ -39,7 +39,7 @@ jobs:
           fi
 
           PROPS_MOD=$(grep '^mod_version=' gradle.properties | cut -d= -f2)
-          PROPS_MC=$(grep '^minecraft =' gradle/libs.versions.toml | sed 's/.*= *"\(.*\)".*/\1/')
+          PROPS_MC=$(grep -oP '^minecraft\s*=\s*"\K[^"]+' gradle/libs.versions.toml)
 
           echo "Tag:        v${MOD_VER}+${MC_VER}"
           echo "Properties: ${PROPS_MOD}+${PROPS_MC}"
