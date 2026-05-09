@@ -7,6 +7,7 @@ fabric-language-kotlin = "1.13.11+kotlin.2.3.21"
 modmenu = "18.0.0-alpha.8"
 cloth-config = "26.1.154"
 kotlin = "2.3.21"
+ktlint = "12.2.0"
 minotaur = "2.9.0"
 
 [libraries]
@@ -19,4 +20,5 @@ cloth-config = { module = "me.shedaniel.cloth:cloth-config-fabric", version.ref 
 [plugins]
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 modrinth-minotaur = { id = "com.modrinth.minotaur", version.ref = "minotaur" }

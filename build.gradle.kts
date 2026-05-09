@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.fabric.loom)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.modrinth.minotaur)
+    alias(libs.plugins.ktlint)
 }
 
 val minecraftVersion = libs.versions.minecraft.get()
@@ -27,12 +28,13 @@ dependencies {
 }
 
 tasks.processResources {
-    val props = mapOf(
-        "version" to project.version,
-        "minecraft_version" to minecraftVersion,
-        "loader_version" to libs.versions.loader.get(),
-        "fabric_kotlin_version" to libs.versions.fabric.language.kotlin.get()
-    )
+    val props =
+        mapOf(
+            "version" to project.version,
+            "minecraft_version" to minecraftVersion,
+            "loader_version" to libs.versions.loader.get(),
+            "fabric_kotlin_version" to libs.versions.fabric.language.kotlin.get(),
+        )
     inputs.properties(props)
     filteringCharset = "UTF-8"
     filesMatching("fabric.mod.json") {
