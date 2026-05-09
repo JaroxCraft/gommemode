@@ -8,21 +8,24 @@
     {
       "matchPackageNames": ["net.fabricmc{/,}**"],
       "registryUrls": ["https://maven.fabricmc.net/"]
-    },
-    {
-      "matchDepNames": ["minecraft"],
-      "matchDatasources": ["json"],
-      "allowedVersions": "/^\\d+(\\.\\d+)+$/"
     }
   ],
+  "customDatasources": {
+    "minecraft": {
+      "defaultRegistryUrlTemplate": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+      "format": "json",
+      "transformTemplates": [
+        "{ \"releases\": versions[type='release'].{ \"version\": id } }"
+      ]
+    }
+  },
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^gradle/libs.versions.toml$"],
+      "fileMatch": ["^gradle/libs\\.versions\\.toml$"],
       "matchStrings": ["minecraft = \"(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "minecraft",
-      "datasourceTemplate": "json",
-      "registryUrlTemplate": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+      "datasourceTemplate": "custom.minecraft"
     }
   ]
 }
