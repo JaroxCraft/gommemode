@@ -24,7 +24,7 @@ class GommeEntity(
 
     override fun getItemBySlot(slot: EquipmentSlot): ItemStack =
         when (slot) {
-            EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND -> diamondSword
+            EquipmentSlot.MAINHAND -> diamondSword
             else -> ItemStack.EMPTY
         }
 
