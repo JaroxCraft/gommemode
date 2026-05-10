@@ -23,14 +23,14 @@ class GommeEntity(
     private val diamondSword: ItemStack = ItemStack(Items.DIAMOND_SWORD)
 
     /**
-         * Provide the entity's equipped item for the given equipment slot.
-         *
-         * Only the main hand returns the entity's diamond sword; all other slots return `ItemStack.EMPTY`.
-         *
-         * @param slot The equipment slot to query.
-         * @return `diamondSword` when `slot` is `EquipmentSlot.MAINHAND`, `ItemStack.EMPTY` otherwise.
-         */
-        override fun getItemBySlot(slot: EquipmentSlot): ItemStack =
+     * Provide the entity's equipped item for the given equipment slot.
+     *
+     * Only the main hand returns the entity's diamond sword; all other slots return `ItemStack.EMPTY`.
+     *
+     * @param slot The equipment slot to query.
+     * @return `diamondSword` when `slot` is `EquipmentSlot.MAINHAND`, `ItemStack.EMPTY` otherwise.
+     */
+    override fun getItemBySlot(slot: EquipmentSlot): ItemStack =
         when (slot) {
             EquipmentSlot.MAINHAND -> diamondSword
             else -> ItemStack.EMPTY

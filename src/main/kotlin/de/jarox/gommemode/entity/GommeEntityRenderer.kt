@@ -34,11 +34,11 @@ class GommeEntityRenderer(
     }
 
     /**
- * Create a new render state holder for this renderer.
- *
- * @return A new, default-initialized {@link HumanoidRenderState} instance.
- */
-override fun createRenderState(): HumanoidRenderState = HumanoidRenderState()
+     * Create a new render state holder for this renderer.
+     *
+     * @return A new, default-initialized {@link HumanoidRenderState} instance.
+     */
+    override fun createRenderState(): HumanoidRenderState = HumanoidRenderState()
 
     /**
      * Populate the humanoid render state for the given entity at the specified partial tick.
@@ -61,10 +61,10 @@ override fun createRenderState(): HumanoidRenderState = HumanoidRenderState()
     }
 
     /**
- * Selects the texture to use for rendering the entity.
- *
- * @param renderState The current humanoid render state (unused; texture is constant).
- * @return The Identifier of the texture to use for rendering.
- */
-override fun getTextureLocation(renderState: HumanoidRenderState): Identifier = gommeTexture
+     * Selects the texture to use for rendering the entity.
+     *
+     * @param renderState The current humanoid render state (unused; texture is constant).
+     * @return The Identifier of the texture to use for rendering.
+     */
+    override fun getTextureLocation(renderState: HumanoidRenderState): Identifier = gommeTexture
 }
