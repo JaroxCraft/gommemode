@@ -31,7 +31,9 @@ object Config {
     }
 
     @Suppress("EmptyMethod")
-    private fun addGeneralOptions(category: ConfigCategory) {
+    private fun addGeneralOptions(
+        @Suppress("unused", "RedundantSuppression") category: ConfigCategory,
+    ) {
         // Placeholder for future configuration entries.
         // Add options to [category] here as the mod gains configurable settings.
     }
