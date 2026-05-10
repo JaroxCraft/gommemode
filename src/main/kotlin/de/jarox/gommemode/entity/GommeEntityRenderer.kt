@@ -33,8 +33,23 @@ class GommeEntityRenderer(
         )
     }
 
-    override fun createRenderState(): HumanoidRenderState = HumanoidRenderState()
+    /**
+ * Create a new render state holder for this renderer.
+ *
+ * @return A new, default-initialized {@link HumanoidRenderState} instance.
+ */
+override fun createRenderState(): HumanoidRenderState = HumanoidRenderState()
 
+    /**
+     * Populate the humanoid render state for the given entity at the specified partial tick.
+     *
+     * Updates `renderState` with humanoid-specific animation, equipment and model information,
+     * and sets the right arm pose to `HumanoidModel.ArmPose.ITEM`.
+     *
+     * @param entity The GommeEntity being rendered.
+     * @param renderState The mutable HumanoidRenderState to populate.
+     * @param partialTick Fractional tick time used for interpolation of animations.
+     */
     override fun extractRenderState(
         entity: GommeEntity,
         renderState: HumanoidRenderState,
@@ -45,5 +60,11 @@ class GommeEntityRenderer(
         renderState.rightArmPose = HumanoidModel.ArmPose.ITEM
     }
 
-    override fun getTextureLocation(renderState: HumanoidRenderState): Identifier = gommeTexture
+    /**
+ * Selects the texture to use for rendering the entity.
+ *
+ * @param renderState The current humanoid render state (unused; texture is constant).
+ * @return The Identifier of the texture to use for rendering.
+ */
+override fun getTextureLocation(renderState: HumanoidRenderState): Identifier = gommeTexture
 }
