@@ -1,0 +1,57 @@
+name: Feature Request
+description: Suggest a new feature or improvement for the mod
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your idea! Please fill out the sections below to help us understand your request.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: Describe the feature or improvement you'd like to see.
+      placeholder: "Add a configuration option to change the GommeHD entity's skin..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation / Use Case
+      description: Why do you want this feature? What problem does it solve or what experience does it improve?
+      placeholder: "This would allow players to customize the look of the entity to match their resource pack."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: If you have an idea of how this could be implemented, describe it here.
+      placeholder: "Add a new config field in the Cloth Config menu that accepts a player name or UUID..."
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you thought of any other ways to achieve this? Why did you reject them?
+      placeholder: "Using a custom resource pack, but that only changes the texture locally..."
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context, mockups, or references that might help.
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have searched existing issues and this feature has not been requested yet.
+          required: true
+        - label: This feature fits the scope and spirit of the mod.
+          required: true
