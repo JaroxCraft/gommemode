@@ -1,9 +1,9 @@
 ![Gommemode Banner](https://raw.githubusercontent.com/JaroxCraft/gommemode/master/.github/assets/banner.jpg)
 
-[![fabric](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3.2.0/assets/compact/supported/fabric_vector.svg)](https://modrinth.com/mod/gommemode)
-[![modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/modrinth_vector.svg)](https://modrinth.com/mod/gommemode)
-[![github](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/github_vector.svg)](https://github.com/JaroxCraft/gommemode/releases/latest)
-[![discord](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3.2.0/assets/compact/social/discord-singular_vector.svg)](https://discordapp.com/users/780518380733988874)
+[![fabric](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3.2.0/assets/cozy/supported/fabric_vector.svg)](https://modrinth.com/mod/gommemode)
+[![modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/mod/gommemode)
+[![github](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/JaroxCraft/gommemode/releases/latest)
+[![discord](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3.2.0/assets/cozy/social/discord-singular_vector.svg)](https://discordapp.com/users/780518380733988874)
 
 ## Overview
 
