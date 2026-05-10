@@ -53,5 +53,5 @@ body:
       options:
         - label: I have searched existing issues and this feature has not been requested yet.
           required: true
-        - label: This feature fits the scope and spirit of the mod.
-          required: true
+        - label: I have explained why this feature fits the mod's purpose and scope.
+          required: false
