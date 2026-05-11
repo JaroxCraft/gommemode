@@ -35,11 +35,12 @@ fun spawnSphere(
     var phiSteps = minOf(phiStepsRaw, maxSteps)
     var thetaSteps = minOf(thetaStepsRaw, maxSteps)
 
-    val totalParticles = (phiSteps + 1) * (thetaSteps + 1)
+    var totalParticles = (phiSteps + 1) * (thetaSteps + 1)
     if (totalParticles > particleBudget) {
         val scale = kotlin.math.sqrt(particleBudget.toDouble() / totalParticles)
         phiSteps = (phiSteps * scale).toInt().coerceAtLeast(1)
         thetaSteps = (thetaSteps * scale).toInt().coerceAtLeast(1)
+        totalParticles = (phiSteps + 1) * (thetaSteps + 1)
     }
 
     Gommemode.LOGGER.debug("Spawning {} particles in sphere at ({}, {}, {})", totalParticles, center.x, center.y, center.z)
