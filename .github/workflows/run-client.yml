@@ -1,0 +1,47 @@
+name: Run Client
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  run-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Install xvfb and mesa libraries
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri
+
+      - name: Launch client and verify it starts
+        run: |
+          set +e
+          timeout 180 xvfb-run -a ./gradlew runClient
+          EXIT=$?
+          set -e
+          if [ $EXIT -eq 124 ]; then
+            echo "Client launched and ran for 3 minutes without crashing"
+            exit 0
+          fi
+          echo "Client exited unexpectedly with code $EXIT"
+          exit 1
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-logs
+          path: run/logs/
