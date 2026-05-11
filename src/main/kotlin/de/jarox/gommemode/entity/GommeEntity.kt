@@ -1,5 +1,6 @@
 package de.jarox.gommemode.entity
 
+import de.jarox.gommemode.Gommemode
 import net.minecraft.client.Minecraft
 import net.minecraft.commands.arguments.EntityAnchorArgument
 import net.minecraft.world.entity.EntityType
@@ -21,6 +22,10 @@ class GommeEntity(
     level: Level,
 ) : LivingEntity(entityType, level) {
     private val diamondSword: ItemStack = ItemStack(Items.DIAMOND_SWORD)
+
+    init {
+        Gommemode.LOGGER.debug("GommeEntity created at ({})", position())
+    }
 
     /**
      * Provide the entity's equipped item for the given equipment slot.

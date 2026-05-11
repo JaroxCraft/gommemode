@@ -23,6 +23,8 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.MobCategory
 import org.lwjgl.glfw.GLFW
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Main entry point for the Gommemode mod.
@@ -36,6 +38,7 @@ class Gommemode :
     private var toggleKeyMapping: KeyMapping? = null
 
     override fun onInitialize() {
+        LOGGER.info("Registering entity type and sound event")
         Registry.register(
             BuiltInRegistries.ENTITY_TYPE,
             Identifier.fromNamespaceAndPath(MOD_ID, "gomme"),
@@ -47,13 +50,16 @@ class Gommemode :
             GOMMEMODE_SOUND_EVENT,
         )
         FabricDefaultAttributeRegistry.register(GOMME_ENTITY_TYPE, LivingEntity.createLivingAttributes())
+        LOGGER.info("Entity and sound registrations complete")
     }
 
     override fun onInitializeClient() {
+        LOGGER.info("Initializing client-side renderer, key mapping, and events")
         registerEntityRenderer()
         registerKeyMapping()
         registerTickEvents()
         registerConnectionEvents()
+        LOGGER.info("Gommemode initialized!")
     }
 
     private fun registerEntityRenderer() {
@@ -112,6 +118,7 @@ class Gommemode :
 
     companion object {
         const val MOD_ID: String = "gommemode"
+        internal val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
         val GOMME_ENTITY_TYPE: EntityType<GommeEntity> =
             EntityType.Builder

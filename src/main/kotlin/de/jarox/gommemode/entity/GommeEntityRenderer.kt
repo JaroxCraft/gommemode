@@ -22,6 +22,7 @@ class GommeEntityRenderer(
         Identifier.fromNamespaceAndPath(Gommemode.MOD_ID, "textures/entity/gommehd.png")
 
     init {
+        Gommemode.LOGGER.debug("Registering GommeEntityRenderer with item-in-hand and custom head layers")
         addLayer(ItemInHandLayer(this))
         addLayer(
             CustomHeadLayer(

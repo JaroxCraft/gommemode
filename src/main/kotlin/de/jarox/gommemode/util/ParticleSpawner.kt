@@ -1,5 +1,6 @@
 package de.jarox.gommemode.util
 
+import de.jarox.gommemode.Gommemode
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.particles.ParticleOptions
 import net.minecraft.world.phys.Vec3
@@ -40,6 +41,8 @@ fun spawnSphere(
         phiSteps = (phiSteps * scale).toInt().coerceAtLeast(1)
         thetaSteps = (thetaSteps * scale).toInt().coerceAtLeast(1)
     }
+
+    Gommemode.LOGGER.debug("Spawning {} particles in sphere at ({}, {}, {})", totalParticles, center.x, center.y, center.z)
 
     for (phiIndex in 0..phiSteps) {
         val phi = phiIndex * stepSize
