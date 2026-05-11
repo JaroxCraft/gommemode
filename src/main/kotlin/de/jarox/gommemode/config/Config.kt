@@ -1,5 +1,6 @@
 package de.jarox.gommemode.config
 
+import de.jarox.gommemode.Gommemode
 import me.shedaniel.clothconfig2.api.ConfigBuilder
 import me.shedaniel.clothconfig2.api.ConfigCategory
 import net.minecraft.client.gui.screens.Screen
@@ -18,6 +19,7 @@ object Config {
      * @return The constructed configuration screen
      */
     fun buildScreen(parentScreen: Screen?): Screen {
+        Gommemode.LOGGER.debug("Building Gommemode config screen")
         val builder =
             ConfigBuilder
                 .create()

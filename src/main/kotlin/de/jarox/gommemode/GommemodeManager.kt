@@ -38,6 +38,7 @@ object GommemodeManager {
      * Ensures no stale references or cooldown times carry over to a new world.
      */
     fun reset() {
+        Gommemode.LOGGER.debug("Resetting Gommemode state")
         stopSongAndRemoveEntity()
         isActive = false
         lastToggleTime = 0L
@@ -63,7 +64,10 @@ object GommemodeManager {
         player: LocalPlayer,
         level: ClientLevel,
     ) {
-        if (System.currentTimeMillis() < lastToggleTime + COOLDOWN_MS) return
+        if (System.currentTimeMillis() < lastToggleTime + COOLDOWN_MS) {
+            Gommemode.LOGGER.debug("Toggle on cooldown, ignoring")
+            return
+        }
 
         if (isActive) {
             deactivate()
@@ -78,12 +82,14 @@ object GommemodeManager {
         level: ClientLevel,
     ) {
         if (isActive) return
+        Gommemode.LOGGER.info("Activating Gommemode")
         isActive = true
         startSongAndSpawnEntity(player, level)
     }
 
     private fun deactivate() {
         if (!isActive) return
+        Gommemode.LOGGER.info("Deactivating Gommemode")
         isActive = false
         stopSongAndRemoveEntity()
     }
@@ -94,6 +100,8 @@ object GommemodeManager {
     ) {
         val hitResult = player.pick(LOOK_DISTANCE, 0f, false)
         val spawnLocation = hitResult.location
+
+        Gommemode.LOGGER.info("Starting song and spawning entity at ({}, {}, {})", spawnLocation.x, spawnLocation.y, spawnLocation.z)
 
         activeSound =
             SimpleSoundInstance(
@@ -124,9 +132,11 @@ object GommemodeManager {
 
         level.addEntity(newEntity)
         gommeEntity = newEntity
+        Gommemode.LOGGER.debug("Entity spawned with ID {}", newEntity.id)
     }
 
     private fun stopSongAndRemoveEntity() {
+        Gommemode.LOGGER.debug("Stopping song and removing entity")
         activeSound?.let { sound ->
             minecraft.soundManager.stop(sound)
             activeSound = null
