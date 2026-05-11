@@ -105,6 +105,9 @@ class Gommemode :
         ClientPlayConnectionEvents.DISCONNECT.register { _, _ ->
             GommemodeManager.reset()
         }
+        ClientPlayConnectionEvents.JOIN.register { _, _, _ ->
+            GommemodeManager.reset()
+        }
     }
 
     companion object {

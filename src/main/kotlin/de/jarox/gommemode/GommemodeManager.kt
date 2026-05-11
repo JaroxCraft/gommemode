@@ -23,9 +23,9 @@ object GommemodeManager {
     private val minecraft: Minecraft = Minecraft.getInstance()
     private var activeSound: SoundInstance? = null
     private var gommeEntity: GommeEntity? = null
-    private var lastToggleTick: Long = 0L
+    private var lastToggleTime: Long = 0L
 
-    private const val COOLDOWN_TICKS: Long = 20L // 1 second at 20 ticks/second
+    private const val COOLDOWN_MS: Long = 1000L // 1 second
     private const val SPAWN_RADIUS: Double = 2.0
     private const val PARTICLE_DENSITY: Double = 0.2
     private const val LOOK_DISTANCE: Double = 5.0
@@ -40,7 +40,7 @@ object GommemodeManager {
     fun reset() {
         stopSongAndRemoveEntity()
         isActive = false
-        lastToggleTick = 0L
+        lastToggleTime = 0L
     }
 
     /**
@@ -63,14 +63,14 @@ object GommemodeManager {
         player: LocalPlayer,
         level: ClientLevel,
     ) {
-        if (level.gameTime < lastToggleTick + COOLDOWN_TICKS) return
+        if (System.currentTimeMillis() < lastToggleTime + COOLDOWN_MS) return
 
         if (isActive) {
             deactivate()
         } else {
             activate(player, level)
         }
-        lastToggleTick = level.gameTime
+        lastToggleTime = System.currentTimeMillis()
     }
 
     private fun activate(
