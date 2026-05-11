@@ -37,10 +37,16 @@ jobs:
           ELAPSED=0
 
           while [ $ELAPSED -lt $TIMEOUT ]; do
+            if ! kill -0 "$PID" 2>/dev/null; then
+              echo "Client process died unexpectedly after ${ELAPSED}s"
+              kill $PID 2>/dev/null || true
+              wait $PID 2>/dev/null || true
+              exit 1
+            fi
             if [ -f "$LOGFILE" ] && grep -q "Gommemode initialized!" "$LOGFILE" 2>/dev/null; then
               echo "Client started successfully after ${ELAPSED}s"
-              kill $PID 2>/dev/null
-              wait $PID 2>/dev/null
+              kill $PID 2>/dev/null || true
+              wait $PID 2>/dev/null || true
               exit 0
             fi
             sleep 2
@@ -48,8 +54,8 @@ jobs:
           done
 
           echo "Timed out after ${TIMEOUT}s waiting for client to start"
-          kill $PID 2>/dev/null
-          wait $PID 2>/dev/null
+          kill $PID 2>/dev/null || true
+          wait $PID 2>/dev/null || true
           exit 1
 
       - name: Upload logs on failure
