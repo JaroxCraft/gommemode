@@ -6,7 +6,7 @@ fabric-api = "0.148.2+26.1.2"
 loader = "0.19.2"
 modmenu = "18.0.0-beta.1"
 cloth-config = "26.1.154"
-loom = "1.16.1"
+loom = "1.16.2"
 ktlint = "14.2.0"
 minotaur = "2.9.0"
 
