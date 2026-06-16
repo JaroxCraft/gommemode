@@ -1,5 +1,5 @@
 [versions]
-minecraft = "26.1.2"
+minecraft = "26.2"
 kotlin = "2.3.21"
 fabric-language-kotlin = "1.13.11+kotlin.2.3.21"
 fabric-api = "0.149.1+26.1.2"
