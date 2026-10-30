@@ -7,7 +7,7 @@
 
 ## Overview
 
-Gommemode is a fun client-side Fabric mod for Minecraft that brings the legendary GommeHD into your world. Spawn a fully rendered GommeHD entity that keeps facing you, while the iconic Gomme hymn (produced by [Lukas, der Rapper](https://www.instagram.com/luzudemkas/)) plays in the background. Whether you're feeling nostalgic or just want some company while mining, Gommemode delivers the ultimate GommeHD experience.
+Gommemode is a fun client-side Fabric mod for Minecraft that brings the legendary GommeHD into your world. Spawn a fully rendered GommeHD entity that keeps facing you, while the iconic [Gomme hymn](https://www.youtube.com/watch?v=2h1BJCxtNes) (produced by [Lukas, der Rapper](https://www.instagram.com/luzudemkas/)) plays in the background. Whether you're feeling nostalgic or just want some company while mining, Gommemode delivers the ultimate GommeHD experience.
 
 ## Features
 
@@ -72,6 +72,6 @@ A: Multiplayer isn't officially supported yet, but it's planned. For now, the en
 - [GitHub Repository](https://github.com/JaroxCraft/gommemode)
 - [Modrinth Page](https://modrinth.com/mod/gommemode)
 - [Discord](https://discordapp.com/users/780518380733988874)
-- [Gomme Hymn on YouTube](https://www.youtube.com/watch?v=2h1BJCxtNes)
+- [Original Gomme Hymn on YouTube](https://www.youtube.com/watch?v=2h1BJCxtNes)
 
 <br>
