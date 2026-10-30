@@ -8,7 +8,7 @@ modmenu = "18.0.0-beta.1"
 cloth-config = "26.1.154"
 loom = "1.16.2"
 ktlint = "14.2.0"
-minotaur = "2.9.0"
+minotaur = "2.10.0"
 
 [libraries]
 fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "loader" }
