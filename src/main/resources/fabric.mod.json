@@ -8,8 +8,7 @@
     "JaroxCraft"
   ],
   "contact": {
-    "sources": "https://github.com/jaroxcraft/gommemode",
-    "homepage": "https://jarox.de"
+    "sources": "https://github.com/jaroxcraft/gommemode"
   },
   "icon": "assets/gommemode/icon.png",
   "license": "GPL-3.0",
