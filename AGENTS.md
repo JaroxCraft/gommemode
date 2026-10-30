@@ -38,6 +38,7 @@ On Windows (PowerShell), omit the `./` prefix.
 | Release                   | `v*` tag push                                | validates tag matches `mod_version` (`gradle.properties`) + `minecraft` (`gradle/libs.versions.toml`), then `./gradlew build`, `./gradlew modrinth`, `./gradlew modrinthSyncBody`, creates GitHub Release |
 | Renovate Config Validator | changes to `renovate.json`                   | validates config                                                                                                                                                                                          |
 | OpenCode                  | issue / PR comment with `/oc` or `/opencode` | runs OpenCode agent                                                                                                                                                                                       |
+| Sync Modrinth Body        | manual (`workflow_dispatch`)                 | `./gradlew modrinthSyncBody`                                                                                                                                                                              |
 
 Release tag format: `v<mod_version>+<minecraft_version>` (e.g. `v0.1.0+26.1.2`). If `mod_version` contains `-`, the
 GitHub release is marked prerelease.
