@@ -22,7 +22,6 @@ import net.minecraft.sounds.SoundEvent
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.MobCategory
-import org.lwjgl.glfw.GLFW
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -76,8 +75,8 @@ class Gommemode :
             KeyMappingHelper.registerKeyMapping(
                 KeyMapping(
                     "key.gommemode.toggle",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_G,
+                    InputConstants.Type.KEYBOARD,
+                    InputConstants.KEY_G,
                     category,
                 ),
             )

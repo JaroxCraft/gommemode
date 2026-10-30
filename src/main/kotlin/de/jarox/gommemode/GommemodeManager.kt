@@ -30,6 +30,9 @@ object GommemodeManager {
     private const val PARTICLE_DENSITY: Double = 0.2
     private const val LOOK_DISTANCE: Double = 5.0
 
+    // Client-only entity: negative so it can never collide with a server-assigned ID.
+    private const val GOMME_ENTITY_ID: Int = -1_000_000
+
     var isActive: Boolean = false
         private set
 
@@ -128,6 +131,7 @@ object GommemodeManager {
         )
 
         val newEntity = GommeEntity(Gommemode.GOMME_ENTITY_TYPE, level)
+        newEntity.id = GOMME_ENTITY_ID
         newEntity.setPos(spawnLocation.x, spawnLocation.y, spawnLocation.z)
 
         level.addEntity(newEntity)
