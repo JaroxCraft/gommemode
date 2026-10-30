@@ -34,7 +34,7 @@ jobs:
             exit 1
           fi
           if ! echo "$MC_VER" | grep -qP '^\d+\.\d+\.\d+$'; then
-            echo "::error::Invalid minecraft version format: $MC_VER. Expected semver (e.g. 26.1.2)"
+            echo "::error::Invalid minecraft version format: $MC_VER. Expected e.g. 26.3 or 26.1.2"
             exit 1
           fi
 
