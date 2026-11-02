@@ -1,5 +1,9 @@
 package de.jarox.gommemode
 
+import de.jarox.gommemode.config.ConfigManager
+import de.jarox.gommemode.config.MessageDisplay
+import de.jarox.gommemode.config.SongEndBehavior
+import de.jarox.gommemode.config.SpawnLocation
 import de.jarox.gommemode.entity.GommeEntity
 import de.jarox.gommemode.util.spawnSphere
 import net.minecraft.client.Minecraft
@@ -7,28 +11,30 @@ import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.client.resources.sounds.SoundInstance
+import net.minecraft.core.particles.ParticleOptions
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.sounds.SoundSource
+import net.minecraft.core.particles.SimpleParticleType
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.Identifier
 import net.minecraft.util.RandomSource
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.phys.Vec3
 
 /**
  * Manages the activation state of the Gommemode, including sound playback,
  * entity spawning, and particle effects.
  *
  * This singleton coordinates the lifecycle of the Gomme entity and its
- * associated sound effects.
+ * associated sound effects. All behavior is driven by [ConfigManager.config].
  */
 object GommemodeManager {
     private val minecraft: Minecraft = Minecraft.getInstance()
     private var activeSound: SoundInstance? = null
     private var gommeEntity: GommeEntity? = null
+    private var spawnLocation: Vec3? = null
     private var lastToggleTime: Long = 0L
-
-    private const val COOLDOWN_MS: Long = 1000L // 1 second
-    private const val SPAWN_RADIUS: Double = 2.0
-    private const val PARTICLE_DENSITY: Double = 0.2
-    private const val LOOK_DISTANCE: Double = 5.0
+    private var pendingJoinActivation: Boolean = false
 
     // Client-only entity: negative so it can never collide with a server-assigned ID.
     private const val GOMME_ENTITY_ID: Int = -1_000_000
@@ -37,14 +43,17 @@ object GommemodeManager {
         private set
 
     /**
-     * Resets all state when disconnecting from a world.
+     * Resets all state when joining or leaving a world.
      * Ensures no stale references or cooldown times carry over to a new world.
+     *
+     * @param joining Whether a world is being joined (enables activate-on-join)
      */
-    fun reset() {
+    fun reset(joining: Boolean = false) {
         Gommemode.LOGGER.debug("Resetting Gommemode state")
         stopSongAndRemoveEntity()
         isActive = false
         lastToggleTime = 0L
+        pendingJoinActivation = joining && ConfigManager.config.enabled && ConfigManager.config.activateOnJoin
     }
 
     /**
@@ -58,6 +67,38 @@ object GommemodeManager {
     }
 
     /**
+     * Runs once per client tick: handles pending activate-on-join and the configured song-end behavior.
+     */
+    fun tick(
+        player: LocalPlayer,
+        level: ClientLevel,
+    ) {
+        if (pendingJoinActivation) {
+            pendingJoinActivation = false
+            if (!isActive) activate(player, level)
+            return
+        }
+
+        if (!isActive || activeSound == null || isPlaying()) return
+
+        // The song has finished while Gommemode is active.
+        when (ConfigManager.config.songEndBehavior) {
+            SongEndBehavior.DEACTIVATE -> {
+                deactivate(player)
+                lastToggleTime = System.currentTimeMillis()
+            }
+
+            SongEndBehavior.LOOP -> {
+                spawnLocation?.let(::playSong)
+            }
+
+            SongEndBehavior.KEEP_ENTITY -> {
+                activeSound = null
+            }
+        }
+    }
+
+    /**
      * Toggles the mod activation state with a cooldown to prevent rapid toggling.
      *
      * @param player The local player initiating the toggle
@@ -67,17 +108,43 @@ object GommemodeManager {
         player: LocalPlayer,
         level: ClientLevel,
     ) {
-        if (System.currentTimeMillis() < lastToggleTime + COOLDOWN_MS) {
+        val config = ConfigManager.config
+        if (!config.enabled) {
+            Gommemode.LOGGER.debug("Gommemode is disabled in the config, ignoring toggle")
+            return
+        }
+        if (System.currentTimeMillis() < lastToggleTime + config.toggleCooldownMs) {
             Gommemode.LOGGER.debug("Toggle on cooldown, ignoring")
             return
         }
 
         if (isActive) {
-            deactivate()
+            deactivate(player)
         } else {
             activate(player, level)
         }
         lastToggleTime = System.currentTimeMillis()
+    }
+
+    /**
+     * Applies config changes that affect an already running Gommemode.
+     * Called after the config screen has been saved.
+     */
+    fun onConfigChanged() {
+        val config = ConfigManager.config
+        if (!config.enabled) {
+            pendingJoinActivation = false
+            if (isActive) {
+                Gommemode.LOGGER.info("Gommemode disabled in config, deactivating")
+                isActive = false
+                stopSongAndRemoveEntity()
+            }
+            return
+        }
+        if (isActive && !config.soundEnabled) {
+            activeSound?.let(minecraft.soundManager::stop)
+            activeSound = null
+        }
     }
 
     private fun activate(
@@ -88,55 +155,93 @@ object GommemodeManager {
         Gommemode.LOGGER.info("Activating Gommemode")
         isActive = true
         startSongAndSpawnEntity(player, level)
+        sendFeedback(player, "gommemode.started")
     }
 
-    private fun deactivate() {
+    private fun deactivate(player: LocalPlayer) {
         if (!isActive) return
         Gommemode.LOGGER.info("Deactivating Gommemode")
         isActive = false
         stopSongAndRemoveEntity()
+        sendFeedback(player, "gommemode.stopped")
+    }
+
+    private fun sendFeedback(
+        player: LocalPlayer,
+        stateKey: String,
+    ) {
+        val message = Component.translatable("gommemode.change").append(Component.translatable(stateKey))
+        when (ConfigManager.config.messageDisplay) {
+            MessageDisplay.NONE -> {}
+            MessageDisplay.ACTION_BAR -> player.sendOverlayMessage(message)
+            MessageDisplay.CHAT -> player.sendSystemMessage(message)
+        }
     }
 
     private fun startSongAndSpawnEntity(
         player: LocalPlayer,
         level: ClientLevel,
     ) {
-        val hitResult = player.pick(LOOK_DISTANCE, 0f, false)
-        val spawnLocation = hitResult.location
+        val config = ConfigManager.config
+        val location =
+            when (config.spawnLocation) {
+                SpawnLocation.CROSSHAIR -> player.pick(config.spawnDistance, 0f, config.spawnHitsFluids).location
+                SpawnLocation.PLAYER -> player.position()
+            }
+        spawnLocation = location
 
-        Gommemode.LOGGER.info("Starting song and spawning entity at ({}, {}, {})", spawnLocation.x, spawnLocation.y, spawnLocation.z)
+        Gommemode.LOGGER.info("Starting song and spawning entity at ({}, {}, {})", location.x, location.y, location.z)
 
-        activeSound =
-            SimpleSoundInstance(
-                Gommemode.GOMMEMODE_SOUND_EVENT,
-                SoundSource.MASTER,
-                1f,
-                1f,
-                RandomSource.create(),
-                spawnLocation.x,
-                spawnLocation.y,
-                spawnLocation.z,
+        playSong(location)
+
+        if (config.particlesEnabled) {
+            spawnSphere(
+                level = level,
+                center = location,
+                radius = config.particleRadius,
+                particleType = resolveParticle(config.particleType),
+                stepSize = config.particleStepSize,
             )
-
-        activeSound?.let { sound ->
-            minecraft.soundManager.play(sound)
         }
-
-        spawnSphere(
-            level = level,
-            center = spawnLocation,
-            radius = SPAWN_RADIUS,
-            particleType = ParticleTypes.FIREWORK,
-            stepSize = PARTICLE_DENSITY,
-        )
 
         val newEntity = GommeEntity(Gommemode.GOMME_ENTITY_TYPE, level)
         newEntity.id = GOMME_ENTITY_ID
-        newEntity.setPos(spawnLocation.x, spawnLocation.y, spawnLocation.z)
+        newEntity.setPos(location.x, location.y, location.z)
 
         level.addEntity(newEntity)
         gommeEntity = newEntity
         Gommemode.LOGGER.debug("Entity spawned with ID {}", newEntity.id)
+    }
+
+    private fun playSong(location: Vec3) {
+        val config = ConfigManager.config
+        if (!config.soundEnabled) {
+            activeSound = null
+            return
+        }
+
+        val positional = config.positionalSound
+        // canStartSilent: keep the song "running" even at zero volume, so song-end detection
+        // still works when the volume or the sound category is muted.
+        val sound =
+            object : SimpleSoundInstance(
+                Gommemode.GOMMEMODE_SONG_IDENTIFIER,
+                config.soundSource,
+                config.volumePercent / 100f,
+                config.pitchPercent / 100f,
+                RandomSource.create(),
+                false,
+                0,
+                if (positional) SoundInstance.Attenuation.LINEAR else SoundInstance.Attenuation.NONE,
+                if (positional) location.x else 0.0,
+                if (positional) location.y else 0.0,
+                if (positional) location.z else 0.0,
+                !positional,
+            ) {
+                override fun canStartSilent(): Boolean = true
+            }
+        activeSound = sound
+        minecraft.soundManager.play(sound)
     }
 
     private fun stopSongAndRemoveEntity() {
@@ -150,5 +255,16 @@ object GommemodeManager {
             entity.remove(Entity.RemovalReason.DISCARDED)
             gommeEntity = null
         }
+        spawnLocation = null
     }
+
+    /**
+     * Resolves a particle id to a spawnable particle, falling back to fireworks for unknown
+     * ids or particle types that need extra parameters.
+     */
+    fun resolveParticle(id: String): ParticleOptions =
+        Identifier
+            .tryParse(id.trim())
+            ?.let { BuiltInRegistries.PARTICLE_TYPE.getOptional(it).orElse(null) } as? SimpleParticleType
+            ?: ParticleTypes.FIREWORK
 }

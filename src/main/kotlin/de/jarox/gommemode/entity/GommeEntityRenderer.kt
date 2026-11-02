@@ -1,6 +1,7 @@
 package de.jarox.gommemode.entity
 
 import de.jarox.gommemode.Gommemode
+import de.jarox.gommemode.config.ConfigManager
 import net.minecraft.client.model.HumanoidModel
 import net.minecraft.client.model.geom.ModelLayers
 import net.minecraft.client.renderer.entity.EntityRendererProvider
@@ -9,7 +10,10 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer
 import net.minecraft.client.renderer.entity.layers.CustomHeadLayer
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState
+import net.minecraft.network.chat.Component
 import net.minecraft.resources.Identifier
+import net.minecraft.world.entity.EquipmentSlot
+import net.minecraft.world.entity.HumanoidArm
 
 class GommeEntityRenderer(
     context: EntityRendererProvider.Context,
@@ -45,7 +49,7 @@ class GommeEntityRenderer(
      * Populate the humanoid render state for the given entity at the specified partial tick.
      *
      * Updates `renderState` with humanoid-specific animation, equipment and model information,
-     * and sets the right arm pose to `HumanoidModel.ArmPose.ITEM`.
+     * and applies the configured arm pose to the main arm (the off arm holds its item, if any).
      *
      * @param entity The GommeEntity being rendered.
      * @param renderState The mutable HumanoidRenderState to populate.
@@ -58,7 +62,32 @@ class GommeEntityRenderer(
     ) {
         super.extractRenderState(entity, renderState, partialTick)
         HumanoidMobRenderer.extractHumanoidRenderState(entity, renderState, partialTick, itemModelResolver)
-        renderState.rightArmPose = HumanoidModel.ArmPose.ITEM
+
+        val config = ConfigManager.config
+        val offHandPose =
+            if (entity.getItemBySlot(EquipmentSlot.OFFHAND).isEmpty) HumanoidModel.ArmPose.EMPTY else HumanoidModel.ArmPose.ITEM
+        if (config.mainArm == HumanoidArm.RIGHT) {
+            renderState.rightArmPose = config.mainArmPose
+            renderState.leftArmPose = offHandPose
+        } else {
+            renderState.leftArmPose = config.mainArmPose
+            renderState.rightArmPose = offHandPose
+        }
+    }
+
+    override fun getShadowRadius(renderState: HumanoidRenderState): Float {
+        val radius = ConfigManager.config.shadowRadius.toFloat()
+        return radius * renderState.scale
+    }
+
+    override fun shouldShowName(
+        entity: GommeEntity,
+        distanceToCameraSq: Double,
+    ): Boolean = ConfigManager.config.showNameTag
+
+    override fun getNameTag(entity: GommeEntity): Component {
+        val text = ConfigManager.config.nameTagText
+        return if (text.isBlank()) entity.displayName else Component.literal(text)
     }
 
     /**
