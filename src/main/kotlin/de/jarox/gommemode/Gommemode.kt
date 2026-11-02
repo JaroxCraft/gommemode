@@ -1,6 +1,7 @@
 package de.jarox.gommemode
 
 import com.mojang.blaze3d.platform.InputConstants
+import de.jarox.gommemode.config.ConfigManager
 import de.jarox.gommemode.entity.GommeEntity
 import de.jarox.gommemode.entity.GommeEntityRenderer
 import net.fabricmc.api.ClientModInitializer
@@ -34,8 +35,6 @@ import org.slf4j.LoggerFactory
 class Gommemode :
     ModInitializer,
     ClientModInitializer {
-    private var toggleKeyMapping: KeyMapping? = null
-
     override fun onInitialize() {
         LOGGER.info("Registering entity type and sound event")
         Registry.register(
@@ -53,7 +52,8 @@ class Gommemode :
     }
 
     override fun onInitializeClient() {
-        LOGGER.info("Initializing client-side renderer, key mapping, and events")
+        LOGGER.info("Initializing client-side config, renderer, key mapping, and events")
+        ConfigManager.load()
         registerEntityRenderer()
         registerKeyMapping()
         registerTickEvents()
@@ -84,16 +84,10 @@ class Gommemode :
 
     private fun registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register { client: Minecraft ->
-            handleAutoDeactivateOnSongEnd(client)
+            val player = client.player ?: return@register
+            val level = client.level ?: return@register
+            GommemodeManager.tick(player, level)
             handleKeyMappingClick(client)
-        }
-    }
-
-    private fun handleAutoDeactivateOnSongEnd(client: Minecraft) {
-        if (GommemodeManager.isPlaying() != GommemodeManager.isActive) {
-            val player = client.player ?: return
-            val level = client.level ?: return
-            GommemodeManager.toggleActive(player, level)
         }
     }
 
@@ -111,13 +105,17 @@ class Gommemode :
             GommemodeManager.reset()
         }
         ClientPlayConnectionEvents.JOIN.register { _, _, _ ->
-            GommemodeManager.reset()
+            GommemodeManager.reset(joining = true)
         }
     }
 
     companion object {
         const val MOD_ID: String = "gommemode"
         internal val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
+
+        /** The toggle key mapping; set during client initialization. */
+        internal var toggleKeyMapping: KeyMapping? = null
+            private set
 
         val GOMME_ENTITY_TYPE: EntityType<GommeEntity> =
             EntityType.Builder
