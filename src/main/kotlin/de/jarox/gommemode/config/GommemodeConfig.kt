@@ -157,8 +157,9 @@ object ConfigManager {
     var config: GommemodeConfig = GommemodeConfig()
         private set
 
-    /** Loads the configuration from disk, writing a default file if none exists or it is unreadable. */
+    /** Loads the configuration from disk, writing defaults if no file exists. */
     fun load() {
+        var readFailed = false
         config =
             try {
                 if (Files.exists(path)) {
@@ -170,12 +171,14 @@ object ConfigManager {
                 }
             } catch (e: IOException) {
                 Gommemode.LOGGER.error("Failed to read config file {}, using defaults", path, e)
+                readFailed = true
                 GommemodeConfig()
             } catch (e: JsonParseException) {
                 Gommemode.LOGGER.error("Config file {} is malformed, using defaults", path, e)
+                readFailed = true
                 GommemodeConfig()
             }.sanitize()
-        save()
+        if (!readFailed) save()
     }
 
     /** Writes the current configuration to disk. */

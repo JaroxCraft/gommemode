@@ -33,6 +33,7 @@ object GommemodeManager {
     private var activeSound: SoundInstance? = null
     private var gommeEntity: GommeEntity? = null
     private var spawnLocation: Vec3? = null
+    private var soundEnabledWhenActive: Boolean = false
     private var lastToggleTime: Long = 0L
     private var pendingJoinActivation: Boolean = false
 
@@ -141,9 +142,14 @@ object GommemodeManager {
             }
             return
         }
-        if (isActive && !config.soundEnabled) {
-            activeSound?.let(minecraft.soundManager::stop)
-            activeSound = null
+        if (isActive) {
+            if (!config.soundEnabled) {
+                activeSound?.let(minecraft.soundManager::stop)
+                activeSound = null
+            } else if (!soundEnabledWhenActive) {
+                spawnLocation?.let(::playSong)
+            }
+            soundEnabledWhenActive = config.soundEnabled
         }
     }
 
@@ -154,6 +160,7 @@ object GommemodeManager {
         if (isActive) return
         Gommemode.LOGGER.info("Activating Gommemode")
         isActive = true
+        soundEnabledWhenActive = ConfigManager.config.soundEnabled
         startSongAndSpawnEntity(player, level)
         sendFeedback(player, "gommemode.started")
     }
