@@ -66,6 +66,9 @@ class GommemodeConfigScreen(
     /** The highlighted entry of the id suggestion list. */
     private var suggestionIndex = 0
 
+    /** Set when a key press was consumed; the character event that follows it is then ignored. */
+    private var suppressNextChar = false
+
     private var hoveredRow: OptionRow? = null
     private var hoverStart = 0L
     private var hoverInstant = false
@@ -739,8 +742,11 @@ class GommemodeConfigScreen(
     }
 
     override fun keyPressed(event: KeyEvent): Boolean {
+        suppressNextChar = false
         allRows.filterIsInstance<KeyRow>().firstOrNull { it.listening }?.let { row ->
             if (event.key() == InputConstants.KEY_ESCAPE) row.listening = false else row.assign(InputConstants.getKey(event))
+            // The character of the assigned key must not reach the search or a text field.
+            suppressNextChar = true
             return true
         }
 
@@ -859,6 +865,8 @@ class GommemodeConfigScreen(
                 keyboardMode = true
                 if (!row.activate()) {
                     row.editBox?.let { box ->
+                        // Space would otherwise also type a space into the field.
+                        suppressNextChar = true
                         focus(box)
                         box.moveCursorToEnd(false)
                     }
@@ -881,6 +889,10 @@ class GommemodeConfigScreen(
     }
 
     override fun charTyped(event: CharacterEvent): Boolean {
+        if (suppressNextChar) {
+            suppressNextChar = false
+            return true
+        }
         val box = focusedBox
         if (box != null) {
             suggestionIndex = 0
