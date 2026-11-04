@@ -114,6 +114,8 @@ object Config {
     ) = entries
         .startKeyCodeField(label("toggleKey"), keyMapping.boundKey())
         .setDefaultValue(keyMapping.defaultKey)
+        // Vanilla key mappings have no modifier support, so Ctrl/Shift/Alt combinations would be dropped silently.
+        .setAllowModifiers(false)
         .setTooltip(tooltip("toggleKey"))
         .setKeySaveConsumer { key ->
             if (key != keyMapping.boundKey()) {
