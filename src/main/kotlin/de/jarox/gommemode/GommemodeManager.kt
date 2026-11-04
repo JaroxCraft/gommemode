@@ -1,6 +1,7 @@
 package de.jarox.gommemode
 
 import de.jarox.gommemode.config.ConfigManager
+import de.jarox.gommemode.config.GommemodeConfig
 import de.jarox.gommemode.config.MessageDisplay
 import de.jarox.gommemode.config.SongEndBehavior
 import de.jarox.gommemode.config.SpawnLocation
@@ -17,6 +18,7 @@ import net.minecraft.core.particles.SimpleParticleType
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.Identifier
+import net.minecraft.sounds.SoundSource
 import net.minecraft.util.RandomSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec3
@@ -34,6 +36,7 @@ object GommemodeManager {
     private var gommeEntity: GommeEntity? = null
     private var spawnLocation: Vec3? = null
     private var soundEnabledWhenActive: Boolean = false
+    private var playingSettings: SoundSettings? = null
     private var lastToggleTime: Long = 0L
 
     // Client-only entity: negative so it can never collide with a server-assigned ID.
@@ -81,7 +84,7 @@ object GommemodeManager {
             }
 
             SongEndBehavior.KEEP_ENTITY -> {
-                activeSound = null
+                stopSong()
             }
         }
     }
@@ -129,11 +132,14 @@ object GommemodeManager {
             return
         }
         if (isActive) {
-            if (!config.soundEnabled) {
-                activeSound?.let(minecraft.soundManager::stop)
-                activeSound = null
-            } else if (!soundEnabledWhenActive) {
-                spawnLocation?.let(::playSong)
+            when {
+                !config.soundEnabled -> stopSong()
+                !soundEnabledWhenActive -> spawnLocation?.let(::playSong)
+                activeSound != null && playingSettings != SoundSettings.of(config) -> {
+                    // A playing sound instance cannot be changed, so start it again with the new settings.
+                    stopSong()
+                    spawnLocation?.let(::playSong)
+                }
             }
             soundEnabledWhenActive = config.soundEnabled
         }
@@ -234,21 +240,26 @@ object GommemodeManager {
                 override fun canStartSilent(): Boolean = true
             }
         activeSound = sound
+        playingSettings = SoundSettings.of(config)
         minecraft.soundManager.play(sound)
     }
 
     private fun stopSongAndRemoveEntity() {
         Gommemode.LOGGER.debug("Stopping song and removing entity")
-        activeSound?.let { sound ->
-            minecraft.soundManager.stop(sound)
-            activeSound = null
-        }
+        stopSong()
 
         gommeEntity?.let { entity ->
             entity.remove(Entity.RemovalReason.DISCARDED)
             gommeEntity = null
         }
         spawnLocation = null
+    }
+
+    /** Stops the song, if one is playing. */
+    private fun stopSong() {
+        activeSound?.let(minecraft.soundManager::stop)
+        activeSound = null
+        playingSettings = null
     }
 
     /**
@@ -260,4 +271,17 @@ object GommemodeManager {
             .tryParse(id.trim())
             ?.let { BuiltInRegistries.PARTICLE_TYPE.getOptional(it).orElse(null) } as? SimpleParticleType
             ?: ParticleTypes.FIREWORK
+}
+
+/** The config values a song instance was started with; used to detect changes while it plays. */
+private data class SoundSettings(
+    val source: SoundSource,
+    val volumePercent: Int,
+    val pitchPercent: Int,
+    val positional: Boolean,
+) {
+    companion object {
+        fun of(config: GommemodeConfig) =
+            SoundSettings(config.soundSource, config.volumePercent, config.pitchPercent, config.positionalSound)
+    }
 }
