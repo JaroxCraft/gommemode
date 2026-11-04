@@ -64,14 +64,16 @@ class GommeEntityRenderer(
         HumanoidMobRenderer.extractHumanoidRenderState(entity, renderState, partialTick, itemModelResolver)
 
         val config = ConfigManager.config
-        val offHandPose =
-            if (entity.getItemBySlot(EquipmentSlot.OFFHAND).isEmpty) HumanoidModel.ArmPose.EMPTY else HumanoidModel.ArmPose.ITEM
+        // "Holding an item" without an item would just raise an empty hand, so the empty off hand hangs down.
+        val offHandEmpty = entity.getItemBySlot(EquipmentSlot.OFFHAND).isEmpty
+        val offArmPose =
+            if (offHandEmpty && config.offArmPose == HumanoidModel.ArmPose.ITEM) HumanoidModel.ArmPose.EMPTY else config.offArmPose
         if (config.mainArm == HumanoidArm.RIGHT) {
             renderState.rightArmPose = config.mainArmPose
-            renderState.leftArmPose = offHandPose
+            renderState.leftArmPose = offArmPose
         } else {
             renderState.leftArmPose = config.mainArmPose
-            renderState.rightArmPose = offHandPose
+            renderState.rightArmPose = offArmPose
         }
     }
 

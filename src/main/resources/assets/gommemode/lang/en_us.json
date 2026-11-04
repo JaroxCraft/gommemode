@@ -57,6 +57,8 @@
   "config.gommemode.option.mainArm.tooltip": "Which arm holds the main hand item.",
   "config.gommemode.option.mainArmPose": "Main Arm Pose",
   "config.gommemode.option.mainArmPose.tooltip": "How the entity holds its main hand item.",
+  "config.gommemode.option.offArmPose": "Off Arm Pose",
+  "config.gommemode.option.offArmPose.tooltip": "How the entity holds its off hand item.\nWithout an off hand item, \"Item\" lets the arm hang down.",
   "config.gommemode.option.lookAtPlayer": "Look at Player",
   "config.gommemode.option.lookAtPlayer.tooltip": "Make the entity turn to face you every tick.",
   "config.gommemode.option.lookTarget": "Look Target",
