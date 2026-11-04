@@ -99,14 +99,6 @@ object Config {
         )
         category.addEntry(
             entries
-                .startBooleanToggle(label("activateOnJoin"), config.activateOnJoin)
-                .setDefaultValue(defaults.activateOnJoin)
-                .setTooltip(tooltip("activateOnJoin"))
-                .setSaveConsumer { config.activateOnJoin = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
                 .startEnumSelector(label("messageDisplay"), MessageDisplay::class.java, config.messageDisplay)
                 .setDefaultValue(defaults.messageDisplay)
                 .setEnumNameProvider(::enumName)

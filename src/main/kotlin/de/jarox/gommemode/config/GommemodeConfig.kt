@@ -56,7 +56,6 @@ class GommemodeConfig {
     var enabled: Boolean = true
     var toggleCooldownMs: Int = 1000
     var songEndBehavior: SongEndBehavior = SongEndBehavior.DEACTIVATE
-    var activateOnJoin: Boolean = false
     var messageDisplay: MessageDisplay = MessageDisplay.NONE
 
     // Sound

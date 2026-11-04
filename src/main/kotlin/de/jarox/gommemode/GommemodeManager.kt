@@ -35,7 +35,6 @@ object GommemodeManager {
     private var spawnLocation: Vec3? = null
     private var soundEnabledWhenActive: Boolean = false
     private var lastToggleTime: Long = 0L
-    private var pendingJoinActivation: Boolean = false
 
     // Client-only entity: negative so it can never collide with a server-assigned ID.
     private const val GOMME_ENTITY_ID: Int = -1_000_000
@@ -46,15 +45,12 @@ object GommemodeManager {
     /**
      * Resets all state when joining or leaving a world.
      * Ensures no stale references or cooldown times carry over to a new world.
-     *
-     * @param joining Whether a world is being joined (enables activate-on-join)
      */
-    fun reset(joining: Boolean = false) {
+    fun reset() {
         Gommemode.LOGGER.debug("Resetting Gommemode state")
         stopSongAndRemoveEntity()
         isActive = false
         lastToggleTime = 0L
-        pendingJoinActivation = joining && ConfigManager.config.enabled && ConfigManager.config.activateOnJoin
     }
 
     /**
@@ -68,18 +64,9 @@ object GommemodeManager {
     }
 
     /**
-     * Runs once per client tick: handles pending activate-on-join and the configured song-end behavior.
+     * Runs once per client tick: handles the configured song-end behavior.
      */
-    fun tick(
-        player: LocalPlayer,
-        level: ClientLevel,
-    ) {
-        if (pendingJoinActivation) {
-            pendingJoinActivation = false
-            if (!isActive) activate(player, level)
-            return
-        }
-
+    fun tick(player: LocalPlayer) {
         if (!isActive || activeSound == null || isPlaying()) return
 
         // The song has finished while Gommemode is active.
@@ -134,7 +121,6 @@ object GommemodeManager {
     fun onConfigChanged() {
         val config = ConfigManager.config
         if (!config.enabled) {
-            pendingJoinActivation = false
             if (isActive) {
                 Gommemode.LOGGER.info("Gommemode disabled in config, deactivating")
                 isActive = false
