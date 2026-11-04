@@ -1,11 +1,15 @@
 package de.jarox.gommemode
 
 import com.mojang.blaze3d.platform.InputConstants
+import com.mojang.brigadier.Command
 import de.jarox.gommemode.config.ConfigManager
+import de.jarox.gommemode.config.screen.GommemodeConfigScreen
 import de.jarox.gommemode.entity.GommeEntity
 import de.jarox.gommemode.entity.GommeEntityRenderer
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
@@ -60,6 +64,7 @@ class Gommemode :
         registerKeyMapping()
         registerTickEvents()
         registerConnectionEvents()
+        registerCommand()
         LOGGER.info("Gommemode initialized!")
     }
 
@@ -114,6 +119,27 @@ class Gommemode :
         }
     }
 
+    /**
+     * Registers `/gommemode` which opens the config screen.
+     * This is the way in for players without ModMenu; the command only runs on the client.
+     */
+    private fun registerCommand() {
+        ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
+            dispatcher.register(
+                ClientCommands.literal(MOD_ID).executes { openConfigScreen() },
+            )
+        }
+    }
+
+    /** Opens the config screen and returns the command result. */
+    private fun openConfigScreen(): Int {
+        val minecraft = Minecraft.getInstance()
+        // The chat screen closes right after the command runs, which would also close a screen opened now.
+        // As a scheduled task, the config screen opens after the chat is gone.
+        minecraft.schedule { minecraft.gui.setScreen(GommemodeConfigScreen(null)) }
+        return Command.SINGLE_SUCCESS
+    }
+
     companion object {
         const val MOD_ID: String = "gommemode"
         internal val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
@@ -129,8 +155,7 @@ class Gommemode :
                     MobCategory.CREATURE,
                 ).build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(MOD_ID, "gomme")))
 
-        val GOMMEMODE_SONG_IDENTIFIER: Identifier =
-            Identifier.fromNamespaceAndPath(MOD_ID, "song")
+        val GOMMEMODE_SONG_IDENTIFIER: Identifier = Identifier.fromNamespaceAndPath(MOD_ID, "song")
 
         val GOMMEMODE_SOUND_EVENT: SoundEvent = SoundEvent.createVariableRangeEvent(GOMMEMODE_SONG_IDENTIFIER)
     }

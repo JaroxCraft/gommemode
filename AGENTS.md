@@ -61,7 +61,9 @@ Configuration in `renovate.json`:
 
 - Entrypoint class: `de.jarox.gommemode.Gommemode` registered in `src/main/resources/fabric.mod.json` under both
   `client` and `main`.
-- ModMenu config entrypoint: `de.jarox.gommemode.modmenu.ModMenuApiImpl`.
+- ModMenu config entrypoint: `de.jarox.gommemode.modmenu.ModMenuApiImpl`. ModMenu is optional (`suggests` in
+  `fabric.mod.json`, optional dependency on Modrinth); the client command `/gommemode` (registered in
+  `Gommemode.kt`) opens the same screen without it.
 - Configuration:
     - `config/GommemodeConfig.kt`: all options with defaults and ranges (`GommemodeConfig`), plus `ConfigManager`,
       which loads/saves `config/gommemode.json` with Gson.
