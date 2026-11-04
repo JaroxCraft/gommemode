@@ -6,18 +6,15 @@ import de.jarox.gommemode.config.MessageDisplay
 import de.jarox.gommemode.config.SongEndBehavior
 import de.jarox.gommemode.config.SpawnLocation
 import de.jarox.gommemode.entity.GommeEntity
+import de.jarox.gommemode.util.RegistryIds
 import de.jarox.gommemode.util.spawnSphere
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.client.resources.sounds.SoundInstance
-import net.minecraft.core.particles.ParticleOptions
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.core.particles.SimpleParticleType
-import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.Identifier
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.RandomSource
 import net.minecraft.world.entity.Entity
@@ -214,7 +211,8 @@ object GommemodeManager {
                 level = level,
                 center = location,
                 radius = config.particleRadius,
-                particleType = resolveParticle(config.particleType),
+                // Unknown ids and particles that need extra parameters fall back to fireworks.
+                particleType = RegistryIds.simpleParticle(config.particleType) ?: ParticleTypes.FIREWORK,
                 stepSize = config.particleStepSize,
             )
         }
@@ -280,16 +278,6 @@ object GommemodeManager {
         activeSound = null
         playingSettings = null
     }
-
-    /**
-     * Resolves a particle id to a spawnable particle, falling back to fireworks for unknown
-     * ids or particle types that need extra parameters.
-     */
-    fun resolveParticle(id: String): ParticleOptions =
-        Identifier
-            .tryParse(id.trim())
-            ?.let { BuiltInRegistries.PARTICLE_TYPE.getOptional(it).orElse(null) } as? SimpleParticleType
-            ?: ParticleTypes.FIREWORK
 }
 
 /** The config values a song instance was started with; used to detect changes while it plays. */
