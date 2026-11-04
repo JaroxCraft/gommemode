@@ -101,6 +101,16 @@ object Config {
         )
         category.addEntry(
             entries
+                .startIntField(label("loopIntervalMs"), config.loopIntervalMs)
+                .setDefaultValue(defaults.loopIntervalMs)
+                .setMin(GommemodeConfig.MIN_LOOP_INTERVAL_MS)
+                .setMax(GommemodeConfig.MAX_LOOP_INTERVAL_MS)
+                .setTooltip(tooltip("loopIntervalMs"))
+                .setSaveConsumer { config.loopIntervalMs = it }
+                .build(),
+        )
+        category.addEntry(
+            entries
                 .startEnumSelector(label("messageDisplay"), MessageDisplay::class.java, config.messageDisplay)
                 .setDefaultValue(defaults.messageDisplay)
                 .setEnumNameProvider(::enumName)
