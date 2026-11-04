@@ -20,7 +20,7 @@
   "config.gommemode.option.toggleCooldownMs": "Abklingzeit (ms)",
   "config.gommemode.option.toggleCooldownMs.tooltip": "Minimale Zeit zwischen zwei Umschaltungen in Millisekunden.",
   "config.gommemode.option.songEndBehavior": "Wenn das Lied endet",
-  "config.gommemode.option.songEndBehavior.tooltip": "Was passiert, wenn die Gomme-Hymne bei aktivem Gommemode zu Ende ist.",
+  "config.gommemode.option.songEndBehavior.tooltip": "Was passiert, wenn die Gomme-Hymne bei aktivem Gommemode zu Ende ist.\nIst „Lied abspielen“ aus, endet kein Lied. Gommemode bleibt dann an, bis du es ausschaltest.",
   "config.gommemode.option.messageDisplay": "Umschalt-Nachricht",
   "config.gommemode.option.messageDisplay.tooltip": "Wo eine Nachricht angezeigt wird, wenn der Gommemode ein- oder ausgeschaltet wird.",
   "config.gommemode.option.soundEnabled": "Lied abspielen",

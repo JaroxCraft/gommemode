@@ -20,7 +20,7 @@
   "config.gommemode.option.toggleCooldownMs": "Toggle Cooldown (ms)",
   "config.gommemode.option.toggleCooldownMs.tooltip": "Minimum time between two toggles, in milliseconds.",
   "config.gommemode.option.songEndBehavior": "When the Song Ends",
-  "config.gommemode.option.songEndBehavior.tooltip": "What happens when the Gomme hymn finishes while Gommemode is active.",
+  "config.gommemode.option.songEndBehavior.tooltip": "What happens when the Gomme hymn finishes while Gommemode is active.\nWith Play Song off there is no song end, so Gommemode stays on until you toggle it off.",
   "config.gommemode.option.messageDisplay": "Toggle Message",
   "config.gommemode.option.messageDisplay.tooltip": "Where to show a message when Gommemode is turned on or off.",
   "config.gommemode.option.soundEnabled": "Play Song",
