@@ -2,6 +2,11 @@ package de.jarox.gommemode.config
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParseException
+import com.google.gson.TypeAdapter
+import com.google.gson.annotations.JsonAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
+import com.google.gson.stream.JsonWriter
 import de.jarox.gommemode.Gommemode
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.model.HumanoidModel
@@ -90,6 +95,8 @@ class GommemodeConfig {
     var showNameTag: Boolean = false
     var nameTagText: String = ""
     var glowing: Boolean = false
+
+    @field:JsonAdapter(HexColorAdapter::class)
     var glowColor: Int = 0xFFFFFF
 
     /** Clamps every value into its supported range and replaces invalid `null`s from Gson. */
@@ -145,6 +152,41 @@ class GommemodeConfig {
         const val MIN_SHADOW_RADIUS = 0.0
         const val MAX_SHADOW_RADIUS = 4.0
     }
+}
+
+/**
+ * Stores an RGB color as a readable `#RRGGBB` string in the config file.
+ *
+ * Plain numbers are still read, so files written before this format keep working.
+ * An unparsable value falls back to white instead of discarding the whole config.
+ */
+internal class HexColorAdapter : TypeAdapter<Int>() {
+    override fun write(
+        out: JsonWriter,
+        value: Int,
+    ) {
+        out.value("#%06X".format(value and 0xFFFFFF))
+    }
+
+    override fun read(reader: JsonReader): Int =
+        when (reader.peek()) {
+            JsonToken.NUMBER -> {
+                reader.nextInt()
+            }
+
+            JsonToken.NULL -> {
+                reader.nextNull()
+                0xFFFFFF
+            }
+
+            else -> {
+                val text = reader.nextString().trim()
+                text.removePrefix("#").toIntOrNull(16) ?: run {
+                    Gommemode.LOGGER.warn("Invalid color '{}' in config, using white", text)
+                    0xFFFFFF
+                }
+            }
+        }
 }
 
 /**
