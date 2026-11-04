@@ -5,7 +5,6 @@ fabric-language-kotlin = "1.14.2+kotlin.2.4.21"
 fabric-api = "0.165.0+26.3"
 loader = "0.20.1"
 modmenu = "21.0.0"
-cloth-config = "26.3.159"
 loom = "1.18.4"
 ktlint = "14.2.0"
 minotaur = "2.10.0"
@@ -15,7 +14,6 @@ fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "loader" 
 fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric-api" }
 fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric-language-kotlin" }
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu" }
-cloth-config = { module = "me.shedaniel.cloth:cloth-config-fabric", version.ref = "cloth-config" }
 
 [plugins]
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }

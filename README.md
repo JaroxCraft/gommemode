@@ -18,7 +18,7 @@ Gommemode is a fun client-side Fabric mod for Minecraft that brings the legendar
 - **Auto-Stop**: Gommemode turns itself off and removes the entity when the song finishes by default (it can also loop the song or keep the entity)
 - **Crosshair Placement**: The entity spawns where you're looking, up to 5 blocks away by default
 - **Custom Rendering**: Uses Minecraft's player model system with a custom GommeHD skin (`textures/entity/gommehd.png`)
-- **Fully Configurable**: Every setting can be changed in game through ModMenu + Cloth Config, or in `config/gommemode.json`
+- **Fully Configurable**: Every setting can be changed in game through ModMenu, or in `config/gommemode.json`
 
 ## Planned Features
 
@@ -40,7 +40,7 @@ The entity spawns at the location your crosshair is pointing at, up to 5 blocks 
 
 ## Configuration
 
-With [ModMenu](https://modrinth.com/mod/modmenu) and [Cloth Config API](https://modrinth.com/mod/cloth-config) installed, open Mods → Gommemode → Config. All options are also stored in `config/gommemode.json`.
+With [ModMenu](https://modrinth.com/mod/modmenu) installed, open Mods → Gommemode → Config. The search field on top finds options on every page, changes take effect with "Apply" or "Done", and "Reset All" restores every default after asking. All options are also stored in `config/gommemode.json`.
 
 - **General**: enable/disable the mod, toggle key, toggle cooldown, what happens when the song ends (deactivate, loop, keep entity), loop interval, toggle message (off, action bar, chat)
 - **Sound**: play song, volume, pitch, sound category, positional or global sound, stop the game music
@@ -57,8 +57,7 @@ With [ModMenu](https://modrinth.com/mod/modmenu) and [Cloth Config API](https://
 
 ### Optional
 
-- [ModMenu](https://modrinth.com/mod/modmenu) — Lists Gommemode in the in-game mod menu
-- [Cloth Config API](https://modrinth.com/mod/cloth-config) — Needed for Gommemode's in-game config screen (opened from ModMenu)
+- [ModMenu](https://modrinth.com/mod/modmenu) — Lists Gommemode in the in-game mod menu and opens its config screen
 
 ## FAQ
 

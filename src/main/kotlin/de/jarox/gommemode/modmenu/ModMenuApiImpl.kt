@@ -2,30 +2,10 @@ package de.jarox.gommemode.modmenu
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory
 import com.terraformersmc.modmenu.api.ModMenuApi
-import de.jarox.gommemode.Gommemode
-import de.jarox.gommemode.config.Config
-import net.fabricmc.loader.api.FabricLoader
+import de.jarox.gommemode.config.screen.GommemodeConfigScreen
 
-/**
- * ModMenu API implementation that provides a configuration screen factory.
- *
- * The screen is built with Cloth Config, which is optional; without it, no config screen is offered
- * (the config file `config/gommemode.json` can still be edited by hand).
- */
+/** ModMenu API implementation that opens the Gommemode config screen. */
 class ModMenuApiImpl : ModMenuApi {
-    /** The Cloth Config screen, or no screen if Cloth Config is not installed. */
-    override fun getModConfigScreenFactory(): ConfigScreenFactory<*> {
-        if (!FabricLoader.getInstance().isModLoaded(CLOTH_CONFIG_MOD_ID)) {
-            Gommemode.LOGGER.debug("Cloth Config is not installed, no config screen available")
-            return ConfigScreenFactory { null }
-        }
-        return ConfigScreenFactory { parent ->
-            Gommemode.LOGGER.debug("Providing ModMenu config screen factory")
-            Config.buildScreen(parent)
-        }
-    }
-
-    private companion object {
-        const val CLOTH_CONFIG_MOD_ID = "cloth-config"
-    }
+    /** Opens [GommemodeConfigScreen], returning to ModMenu when it is closed. */
+    override fun getModConfigScreenFactory(): ConfigScreenFactory<*> = ConfigScreenFactory(::GommemodeConfigScreen)
 }

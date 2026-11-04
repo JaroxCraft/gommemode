@@ -38,11 +38,6 @@
       "registryUrls": ["https://maven.terraformersmc.com/"]
     },
     {
-      "description": "Shedaniel registry for cloth-config",
-      "matchPackageNames": ["me.shedaniel.cloth:cloth-config-fabric"],
-      "registryUrls": ["https://maven.shedaniel.me/"]
-    },
-    {
       "description": "Minecraft updates are notification-only",
       "matchPackageNames": ["minecraft"],
       "draftPR": true,

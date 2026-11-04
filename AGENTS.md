@@ -55,7 +55,6 @@ Configuration in `renovate.json`:
 - Custom registries:
     - `net.fabricmc.*` → `maven.fabricmc.net`
     - `com.terraformersmc:modmenu` → `maven.terraformersmc.com`
-    - `me.shedaniel.cloth:cloth-config-fabric` → `maven.shedaniel.me`
 - Fabric API updates are labeled `dependencies`; Minecraft updates always require manual intervention.
 
 ## Mod Architecture
@@ -65,13 +64,15 @@ Configuration in `renovate.json`:
 - ModMenu config entrypoint: `de.jarox.gommemode.modmenu.ModMenuApiImpl`.
 - Configuration:
     - `config/GommemodeConfig.kt`: all options with defaults and ranges (`GommemodeConfig`), plus `ConfigManager`,
-      which loads/saves `config/gommemode.json` with Gson. This works without Cloth Config.
-    - `config/Config.kt`: the Cloth Config screen. Cloth Config is optional at runtime; `ModMenuApiImpl` only offers
-      the screen when it is installed, so nothing outside `Config.kt` may reference Cloth classes.
-    - Code reads options from `ConfigManager.config` at the time it needs them. After the screen is saved,
+      which loads/saves `config/gommemode.json` with Gson.
+    - `config/screen/`: the config screen, drawn by the mod itself (no config library). `ConfigPages.kt` defines the
+      pages, groups and option rows; `OptionRows.kt` has the row types (toggle, enum, slider, text/id, color, key);
+      `GommemodeConfigScreen.kt` does layout, search, input, apply and reset. The screen edits a copy of the config
+      and writes it with `ConfigManager.update()` on "Apply"/"Done".
+    - Code reads options from `ConfigManager.config` at the time it needs them. After the screen applies its changes,
       `GommemodeManager.onConfigChanged()` applies changes to a running Gommemode.
-    - A new option needs: a field in `GommemodeConfig` (clamped in `sanitize()` if it has a range), an entry in
-      `Config.kt`, and label + tooltip keys in both `en_us.json` and `de_de.json`.
+    - A new option needs: a field in `GommemodeConfig` (clamped in `sanitize()` if it has a range), a row in
+      `config/screen/ConfigPages.kt`, and label + tooltip keys in both `en_us.json` and `de_de.json`.
 - Main source lives under `src/main/kotlin/de/jarox/gommemode/`.
 
 ## Agent Behavior

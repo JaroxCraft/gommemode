@@ -14,7 +14,6 @@ group = providers.gradleProperty("maven_group").get()
 
 repositories {
     maven { url = uri("https://maven.terraformersmc.com/") }
-    maven { url = uri("https://maven.shedaniel.me/") }
     mavenCentral()
 }
 
@@ -23,7 +22,6 @@ dependencies {
     implementation(libs.fabric.loader)
     implementation(libs.fabric.api)
     implementation(libs.modmenu)
-    implementation(libs.cloth.config)
     implementation(libs.fabric.language.kotlin)
 }
 
