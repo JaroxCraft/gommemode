@@ -171,25 +171,30 @@ internal class HexColorAdapter : TypeAdapter<Int>() {
     }
 
     /** Reads `#RRGGBB`, `RRGGBB` or a plain number; anything else becomes white. */
-    override fun read(reader: JsonReader): Int =
-        when (reader.peek()) {
-            JsonToken.NUMBER -> {
-                reader.nextInt()
-            }
-
-            JsonToken.NULL -> {
-                reader.nextNull()
-                0xFFFFFF
-            }
-
-            else -> {
-                val text = reader.nextString().trim()
-                text.removePrefix("#").toIntOrNull(16) ?: run {
-                    Gommemode.LOGGER.warn("Invalid color '{}' in config, using white", text)
-                    0xFFFFFF
-                }
-            }
+    override fun read(reader: JsonReader): Int {
+        val token = reader.peek()
+        if (token == JsonToken.NULL) {
+            reader.nextNull()
+            return WHITE
         }
+        if (token != JsonToken.NUMBER && token != JsonToken.STRING) {
+            reader.skipValue()
+            Gommemode.LOGGER.warn("Invalid color of type {} in config, using white", token)
+            return WHITE
+        }
+
+        // Read numbers as text too: nextInt() throws for values like 1.5 or 4294967295.
+        val text = reader.nextString().trim()
+        val color = if (token == JsonToken.NUMBER) text.toIntOrNull() else text.removePrefix("#").toIntOrNull(16)
+        return color ?: run {
+            Gommemode.LOGGER.warn("Invalid color '{}' in config, using white", text)
+            WHITE
+        }
+    }
+
+    private companion object {
+        const val WHITE = 0xFFFFFF
+    }
 }
 
 /**
