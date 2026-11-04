@@ -1,6 +1,13 @@
 package de.jarox.gommemode.config.screen
 
 import de.jarox.gommemode.config.GommemodeConfig
+import de.jarox.gommemode.config.screen.rows.ColorRow
+import de.jarox.gommemode.config.screen.rows.EnumRow
+import de.jarox.gommemode.config.screen.rows.KeyRow
+import de.jarox.gommemode.config.screen.rows.OptionRow
+import de.jarox.gommemode.config.screen.rows.SliderRow
+import de.jarox.gommemode.config.screen.rows.TextRow
+import de.jarox.gommemode.config.screen.rows.ToggleRow
 import de.jarox.gommemode.util.RegistryIds
 import net.minecraft.core.particles.SimpleParticleType
 import net.minecraft.network.chat.Component
@@ -159,14 +166,14 @@ private class RowFactory(
         range: IntRange,
         step: Int,
         unit: Component?,
-    ) = SliderRow(property, state, range.first.toDouble(), range.last.toDouble(), step.toDouble(), { it.roundToInt() }, unit)
+    ) = SliderRow(property, state, range.first.toDouble()..range.last.toDouble(), step.toDouble(), { it.roundToInt() }, unit)
 
     fun slider(
         property: KMutableProperty1<GommemodeConfig, Double>,
         range: ClosedFloatingPointRange<Double>,
         step: Double,
         unit: Component?,
-    ) = SliderRow(property, state, range.start, range.endInclusive, step, { it }, unit)
+    ) = SliderRow(property, state, range, step, { it }, unit)
 
     fun text(
         property: KMutableProperty1<GommemodeConfig, String>,

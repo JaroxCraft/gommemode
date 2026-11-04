@@ -1,4 +1,4 @@
-package de.jarox.gommemode.config.screen
+package de.jarox.gommemode.config.screen.theme
 
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
@@ -24,6 +24,8 @@ internal object Theme {
     const val ACCENT: Int = 0xFF8AD7FF.toInt()
     const val MODIFIED: Int = 0xFFFFE080.toInt()
     const val ERROR: Int = 0xFFFF6060.toInt()
+
+    const val CHECKBOX_SIZE = 9
 
     /** Plays the vanilla button click. */
     fun playClick() {
@@ -71,25 +73,8 @@ internal object Theme {
         checked: Boolean,
         hovered: Boolean,
     ) {
-        val size = 9
+        val size = CHECKBOX_SIZE
         g.outline(x, y, size, size, if (hovered) ACCENT else TEXT)
         if (checked) g.fill(x + 2, y + 2, x + size - 2, y + size - 2, ACCENT)
     }
-}
-
-/** An axis-aligned rectangle in GUI coordinates. */
-internal data class Rect(
-    val x: Int,
-    val y: Int,
-    val width: Int,
-    val height: Int,
-) {
-    val right: Int get() = x + width
-    val bottom: Int get() = y + height
-
-    /** Whether the point ([px], [py]) lies inside this rectangle. */
-    fun contains(
-        px: Double,
-        py: Double,
-    ): Boolean = px >= x && px < right && py >= y && py < bottom
 }
