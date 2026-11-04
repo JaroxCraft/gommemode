@@ -5,9 +5,21 @@ import com.mojang.blaze3d.platform.cursor.CursorType
 import com.mojang.blaze3d.platform.cursor.CursorTypes
 import de.jarox.gommemode.Gommemode
 import de.jarox.gommemode.GommemodeManager
-import de.jarox.gommemode.config.ConfigManager
-import net.fabricmc.loader.api.FabricLoader
-import net.minecraft.client.KeyMapping
+import de.jarox.gommemode.config.screen.components.ButtonBar
+import de.jarox.gommemode.config.screen.components.ButtonBar.Button
+import de.jarox.gommemode.config.screen.components.OptionList
+import de.jarox.gommemode.config.screen.components.PlacedRow
+import de.jarox.gommemode.config.screen.components.RowIcon
+import de.jarox.gommemode.config.screen.components.SearchField
+import de.jarox.gommemode.config.screen.components.Sidebar
+import de.jarox.gommemode.config.screen.components.SuggestionList
+import de.jarox.gommemode.config.screen.components.Tooltips
+import de.jarox.gommemode.config.screen.rows.KeyRow
+import de.jarox.gommemode.config.screen.rows.OptionRow
+import de.jarox.gommemode.config.screen.rows.RowSummary
+import de.jarox.gommemode.config.screen.rows.SliderRow
+import de.jarox.gommemode.config.screen.rows.ToggleRow
+import de.jarox.gommemode.config.screen.theme.Theme
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.screens.ConfirmScreen
@@ -15,47 +27,32 @@ import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
-import net.minecraft.client.renderer.RenderPipelines
-import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.Identifier
-import net.minecraft.util.FormattedCharSequence
-import net.minecraft.util.Util
-import kotlin.math.max
-import kotlin.math.roundToInt
 
 /**
- * The Gommemode config screen: a search field on top, the pages in a sidebar on the left and the
- * options of the selected page (or the search results of all pages) on the right.
+ * The Gommemode config screen: a search field on top, the pages in a [Sidebar] on the left and the
+ * [OptionList] of the selected page (or the search results of all pages) on the right.
  *
  * Changes are made to a working copy and only take effect with "Apply" or "Done".
+ * This class owns the edit state, routes input to the parts in `components` and applies, resets and closes.
  */
 class GommemodeConfigScreen(
     private val parent: Screen?,
 ) : Screen(Component.translatable("$KEY_PREFIX.title")) {
     private val state = EditState(Gommemode.toggleKeyMapping)
     private val pages = buildPages(state)
-    private val allRows = pages.flatMap { it.rows }
+    private val summary = RowSummary(pages.flatMap { it.rows })
+    private val allRows = summary.rows
 
-    // Reopening the screen shows the page that was open last time.
-    private var selectedPage = lastPage.coerceIn(pages.indices)
-        set(value) {
-            field = value
-            lastPage = value
-        }
-    private var query = ""
-    private var scroll = 0.0
+    private val list = OptionList(pages)
+    private val sidebar = Sidebar(pages, list)
+    private val suggestions = SuggestionList()
+    private val tooltips = Tooltips(minecraft.font)
+    private val buttons = ButtonBar(summary)
+    private var layout = ScreenLayout(0, 0, 0)
 
-    private val searchBox =
-        EditBox(minecraft.font, 0, 0, 100, 9, Component.translatable("$KEY_PREFIX.search")).apply {
-            setBordered(false)
-            setMaxLength(64)
-            setHint(Component.translatable("$KEY_PREFIX.search").withColor(Theme.TEXT_DIM))
-            setResponder { text ->
-                query = text.trim()
-                scroll = 0.0
-            }
-        }
+    private val search = SearchField(minecraft.font) { text -> list.query = text }
+    private val searchBox = search.box
 
     /** The text field that receives keyboard input, if any. */
     private var focusedBox: EditBox? = null
@@ -63,22 +60,8 @@ class GommemodeConfigScreen(
     /** The slider that is being dragged, if any. */
     private var draggedRow: OptionRow? = null
 
-    /** The highlighted entry of the id suggestion list. */
-    private var suggestionIndex = 0
-
-    /** Whether the player moved the suggestion highlight with Up/Down since the last edit. */
-    private var suggestionNavigated = false
-
     /** Set when a key press was consumed; the character event that follows it is then ignored. */
     private var suppressNextChar = false
-
-    private var hoveredRow: OptionRow? = null
-    private var hoverStart = 0L
-    private var hoverInstant = false
-    private var lastTooltipAt = 0L
-
-    /** Whether the scrollbar thumb is being dragged. */
-    private var draggingScrollbar = false
 
     /** The row selected with the arrow keys (or last clicked); Enter, Space and the arrow keys act on it. */
     private var selectedRow: OptionRow? = null
@@ -90,7 +73,7 @@ class GommemodeConfigScreen(
     private var opened = false
 
     /**
-     * Runs whenever this screen is shown, including after returning from a confirmation dialog.
+     * Runs whenever this screen is shown or resized, including after returning from a confirmation dialog.
      *
      * Switching screens turns off Minecraft's text input, and only focusing a field turns it on again,
      * so the focus is applied here rather than in the constructor. Like vanilla's world selection, the
@@ -98,6 +81,9 @@ class GommemodeConfigScreen(
      */
     override fun init() {
         super.init()
+        layout = ScreenLayout(width, height, ButtonBar.resetAllWidth(font))
+        list.area = layout.content
+
         val box = focusedBox ?: searchBox.takeUnless { opened }
         opened = true
         focusedBox?.isFocused = false
@@ -105,124 +91,30 @@ class GommemodeConfigScreen(
         focus(box)
     }
 
-    private val modVersion: String =
-        FabricLoader
-            .getInstance()
-            .getModContainer(Gommemode.MOD_ID)
-            .map { it.metadata.version.friendlyString }
-            .orElse("")
+    private fun press(button: Button) {
+        Theme.playClick()
+        when (button) {
+            Button.RESET_ALL -> {
+                confirmResetAll()
+            }
 
-    private val hasErrors: Boolean get() = allRows.any { it.error() != null }
-    private val isDirty: Boolean get() = allRows.any { it.isModified }
+            // Cancel closes without applying; with unsaved changes it asks first, like Escape.
+            Button.CANCEL -> {
+                onClose()
+            }
 
-    // Reset All is disabled when there is nothing to reset.
-    private val allDefault: Boolean get() = allRows.all { it.isDefault }
+            Button.APPLY -> {
+                apply()
+            }
 
-    // Layout. Everything is computed from the current screen size, so resizing needs no extra work.
-
-    private val searchRect get() = Rect(MARGIN, MARGIN, width - 2 * MARGIN, BUTTON_HEIGHT)
-    private val bodyTop get() = MARGIN + BUTTON_HEIGHT + GAP
-    private val bottomY get() = height - MARGIN - BUTTON_HEIGHT
-    private val sidebarRect get() = Rect(MARGIN, bodyTop, (width * 0.2).toInt().coerceIn(100, 150), bottomY - GAP - bodyTop)
-    private val contentRect get() =
-        Rect(
-            sidebarRect.right + GAP,
-            bodyTop,
-            width - MARGIN - sidebarRect.right - GAP,
-            bottomY - GAP - bodyTop,
-        )
-    private val resetAllRect get() = Rect(MARGIN, bottomY, font.width(RESET_ALL) + 20, BUTTON_HEIGHT)
-
-    /** The width of Cancel, Apply and Done: 80, or less if the window is too narrow for all four buttons. */
-    private val bottomButtonWidth get() = ((width - MARGIN - resetAllRect.right - 4 * GAP) / 3).coerceAtMost(80)
-    private val doneRect get() = Rect(width - MARGIN - bottomButtonWidth, bottomY, bottomButtonWidth, BUTTON_HEIGHT)
-    private val applyRect get() = Rect(doneRect.x - 4 - bottomButtonWidth, bottomY, bottomButtonWidth, BUTTON_HEIGHT)
-    private val cancelRect get() = Rect(applyRect.x - 4 - bottomButtonWidth, bottomY, bottomButtonWidth, BUTTON_HEIGHT)
-
-    private fun pageRect(index: Int) =
-        Rect(sidebarRect.x, sidebarRect.y + SIDEBAR_HEADER + index * PAGE_HEIGHT, sidebarRect.width, PAGE_HEIGHT)
-
-    /** An entry of the option list: a group title or an option row. */
-    private sealed interface Item
-
-    private class Header(
-        val title: Component,
-    ) : Item
-
-    private class RowItem(
-        val row: OptionRow,
-    ) : Item
-
-    /** An item with its position on screen. */
-    private class Placed(
-        val item: Item,
-        val rect: Rect,
-    ) {
-        val row: OptionRow? get() = (item as? RowItem)?.row
-
-        /** Where the control of the row is drawn. */
-        val control: Rect get() = Rect(rect.right - 8 - (row?.controlWidth ?: 0), rect.y, row?.controlWidth ?: 0, rect.height)
-        val resetIcon: Rect get() = Rect(control.x - ICON_SIZE - 6, rect.y + (rect.height - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE)
-        val undoIcon: Rect get() = Rect(resetIcon.x - ICON_SIZE - 2, resetIcon.y, ICON_SIZE, ICON_SIZE)
-    }
-
-    /** The groups of the selected page, or all matching options grouped by page while searching. */
-    private fun items(): List<Item> =
-        if (query.isEmpty()) {
-            pages[selectedPage].groups.flatMap { group -> listOf(Header(group.title)) + group.rows.map(::RowItem) }
-        } else {
-            pages.flatMap { page ->
-                val matches = page.rows.filter { it.matches(query) }
-                if (matches.isEmpty()) emptyList() else listOf(Header(page.title)) + matches.map(::RowItem)
+            Button.DONE -> {
+                apply()
+                minecraft.gui.setScreen(parent)
             }
         }
-
-    /** Group titles are taller than rows, so the space above a title is larger than the space below it. */
-    private fun heightOf(item: Item) = if (item is Header) HEADER_HEIGHT else ITEM_HEIGHT
-
-    private fun totalHeight(items: List<Item>) = items.sumOf(::heightOf)
-
-    private fun maxScroll(items: List<Item>) = max(0, totalHeight(items) - contentRect.height).toDouble()
-
-    /** The items with their current positions; rows outside the visible area are included too. */
-    private fun placed(): List<Placed> {
-        val content = contentRect
-        var y = content.y - scroll.roundToInt()
-        return items().map { item ->
-            Placed(item, Rect(content.x, y, content.width - SCROLLBAR_SPACE, heightOf(item))).also { y += heightOf(item) }
-        }
     }
 
-    /** The thumb of the scrollbar, or `null` if everything fits. */
-    private fun scrollThumb(items: List<Item>): Rect? {
-        val maxScroll = maxScroll(items)
-        if (maxScroll <= 0) return null
-        val content = contentRect
-        val thumbHeight = max(20, content.height * content.height / totalHeight(items))
-        val thumbY = content.y + ((scroll / maxScroll) * (content.height - thumbHeight)).roundToInt()
-        return Rect(content.right - 3, thumbY, 3, thumbHeight)
-    }
-
-    /** The area that reacts to scrollbar clicks: a bit wider than the thin bar itself. */
-    private val scrollbarRect get() = Rect(contentRect.right - 6, contentRect.y, 6, contentRect.height)
-
-    /** Scrolls so that the thumb center follows the mouse at [mouseY]. */
-    private fun scrollTo(mouseY: Double) {
-        val items = items()
-        val thumb = scrollThumb(items) ?: return
-        val content = contentRect
-        val fraction = (mouseY - content.y - thumb.height / 2.0) / (content.height - thumb.height)
-        scroll = (fraction * maxScroll(items)).coerceIn(0.0, maxScroll(items))
-    }
-
-    /** How many unsaved changes there are, shown on the Apply button. */
-    private val modifiedCount: Int get() = allRows.count { it.isModified }
-
-    /** The visible row at the given position, if any. */
-    private fun placedAt(
-        x: Double,
-        y: Double,
-    ): Placed? = if (contentRect.contains(x, y)) placed().firstOrNull { it.row != null && it.rect.contains(x, y) } else null
+    // Drawing
 
     override fun extractRenderState(
         g: GuiGraphicsExtractor,
@@ -231,429 +123,88 @@ class GommemodeConfigScreen(
         delta: Float,
     ) {
         super.extractRenderState(g, mouseX, mouseY, delta)
-        scroll = scroll.coerceIn(0.0, maxScroll(items()))
+        list.clampScroll()
 
-        extractSearch(g, mouseX, mouseY, delta)
-        extractSidebar(g, mouseX, mouseY)
-        val placed = placed()
-        extractOptions(g, placed, mouseX, mouseY, delta)
-        extractButtons(g, mouseX, mouseY)
-        extractSuggestions(g, placed, mouseX, mouseY)
-        extractTooltips(g, placed, mouseX, mouseY)
-        cursorAt(placed, mouseX.toDouble(), mouseY.toDouble())?.let(g::requestCursor)
+        search.extract(g, layout.search, mouseX, mouseY, delta)
+        sidebar.extract(g, font, layout, mouseX, mouseY)
+        list.extract(g, font, mouseX, mouseY, delta, selectedRow)
+        buttons.extract(g, font, layout, mouseX, mouseY)
+        val open = openSuggestions()
+        open?.let { suggestions.extract(g, font, it, mouseX, mouseY) }
+        extractTooltips(g, open, mouseX.toDouble(), mouseY.toDouble())
+        cursorAt(open, mouseX.toDouble(), mouseY.toDouble())?.let(g::requestCursor)
     }
 
-    /** The mouse cursor for the element under the mouse, like vanilla widgets: a hand on clickable things, a text cursor on fields. */
-    private fun cursorAt(
-        placed: List<Placed>,
-        x: Double,
-        y: Double,
-    ): CursorType? {
-        if (draggedRow != null) return CursorTypes.RESIZE_EW
-        if (draggingScrollbar) return CursorTypes.RESIZE_NS
-        if (suggestionEntries(placed).any { it.second.contains(x, y) }) return CursorTypes.POINTING_HAND
-        if (searchRect.contains(x, y)) return CursorTypes.IBEAM
-        if (cancelRect.contains(x, y) || (resetAllRect.contains(x, y) && !allDefault)) return CursorTypes.POINTING_HAND
-        if (applyRect.contains(x, y) && isDirty && !hasErrors) return CursorTypes.POINTING_HAND
-        if (doneRect.contains(x, y) && !hasErrors) return CursorTypes.POINTING_HAND
-        if (pages.indices.any { pageRect(it).contains(x, y) }) return CursorTypes.POINTING_HAND
-        if (scrollThumb(items()) != null && scrollbarRect.contains(x, y)) return CursorTypes.RESIZE_NS
-
-        val entry = placedAt(x, y) ?: return null
-        val row = entry.row ?: return null
-        return when {
-            !row.isDefault && entry.resetIcon.contains(x, y) -> CursorTypes.POINTING_HAND
-            row.showsUndo && entry.undoIcon.contains(x, y) -> CursorTypes.POINTING_HAND
-            row is ToggleRow -> CursorTypes.POINTING_HAND
-            row.editBoxArea(entry.control)?.contains(x, y) == true -> CursorTypes.IBEAM
-            entry.control.contains(x, y) -> CursorTypes.POINTING_HAND
-            else -> null
-        }
-    }
-
-    private fun extractSearch(
-        g: GuiGraphicsExtractor,
-        mouseX: Int,
-        mouseY: Int,
-        delta: Float,
-    ) {
-        val search = searchRect
-        g.fill(search.x, search.y, search.right, search.bottom, Theme.PANEL_DARK)
-        if (searchBox.isFocused) g.outline(search.x, search.y, search.width, search.height, Theme.ACCENT)
-        searchBox.setSize(search.width - 12, 9)
-        searchBox.setX(search.x + 6)
-        searchBox.setY(search.y + (search.height - 8) / 2)
-        searchBox.extractRenderState(g, mouseX, mouseY, delta)
-    }
-
-    private fun extractSidebar(
-        g: GuiGraphicsExtractor,
-        mouseX: Int,
-        mouseY: Int,
-    ) {
-        val sidebar = sidebarRect
-        val pagesBottom = pageRect(pages.size - 1).bottom + 4
-        g.fill(sidebar.x, sidebar.y, sidebar.right, pagesBottom, Theme.PANEL_DARK)
-
-        g.blit(RenderPipelines.GUI_TEXTURED, ICON, sidebar.x + 6, sidebar.y + 7, 0f, 0f, 16, 16, 16, 16)
-        g.text(font, Component.literal("Gommemode"), sidebar.x + 28, sidebar.y + 6, Theme.TEXT)
-        g.text(font, Component.literal(modVersion), sidebar.x + 28, sidebar.y + 17, Theme.TEXT_DIM)
-
-        pages.forEachIndexed { index, page ->
-            val rect = pageRect(index)
-            val selected = query.isEmpty() && index == selectedPage
-            val hovered = rect.contains(mouseX.toDouble(), mouseY.toDouble())
-            when {
-                selected -> {
-                    g.fill(rect.x, rect.y, rect.right, rect.bottom, Theme.SELECTED)
-                    g.fill(rect.x, rect.y, rect.x + 2, rect.bottom, Theme.TEXT)
-                }
-
-                hovered -> {
-                    g.fill(rect.x, rect.y, rect.right, rect.bottom, Theme.HOVER)
-                }
-            }
-            val matches = if (query.isEmpty()) -1 else page.rows.count { it.matches(query) }
-            val titleColor =
-                when {
-                    selected -> Theme.TEXT
-                    matches == 0 -> Theme.TEXT_DISABLED
-                    else -> Theme.ACCENT
-                }
-            val textY = rect.y + (rect.height - 8) / 2
-            g.text(font, page.title, rect.x + 10, textY, titleColor)
-
-            // A marker shows pages with invalid values (red) or unsaved changes (yellow), so nothing is hidden on other pages.
-            // The two markers also differ in shape ("!" and a dot), so they do not rely on color alone.
-            var right = rect.right - 6
-            when {
-                page.rows.any { it.error() != null } -> {
-                    Theme.pattern(g, ERROR_MARK, Rect(right - 4, rect.y, 4, rect.height), Theme.ERROR)
-                    right -= 8
-                }
-
-                page.rows.any { it.isModified } -> {
-                    g.fill(right - 4, rect.y + (rect.height - 4) / 2, right, rect.y + (rect.height + 4) / 2, Theme.MODIFIED)
-                    right -= 8
-                }
-            }
-            // While searching, each page shows how many of its options match.
-            if (matches > 0) {
-                val count = matches.toString()
-                g.text(font, count, right - font.width(count), textY, Theme.TEXT_DIM)
-            }
-        }
-    }
-
-    private fun extractOptions(
-        g: GuiGraphicsExtractor,
-        placed: List<Placed>,
-        mouseX: Int,
-        mouseY: Int,
-        delta: Float,
-    ) {
-        val content = contentRect
-        val mouseInContent = content.contains(mouseX.toDouble(), mouseY.toDouble())
-        g.enableScissor(content.x, content.y, content.right, content.bottom)
-
-        if (placed.isEmpty()) {
-            val centerX = content.x + content.width / 2
-            g.centeredText(font, Component.translatable("$KEY_PREFIX.noResults", query), centerX, content.y + 20, Theme.TEXT)
-            g.centeredText(font, Component.translatable("$KEY_PREFIX.noResults.hint"), centerX, content.y + 32, Theme.TEXT_DIM)
-        }
-
-        for (entry in placed) {
-            val rect = entry.rect
-            if (rect.bottom < content.y || rect.y > content.bottom) continue
-            when (val item = entry.item) {
-                is Header -> {
-                    g.centeredText(font, item.title, rect.x + rect.width / 2, rect.bottom - 12, Theme.TEXT)
-                }
-
-                is RowItem -> {
-                    val row = item.row
-                    val hovered = mouseInContent && rect.contains(mouseX.toDouble(), mouseY.toDouble())
-                    g.fill(rect.x, rect.y, rect.right, rect.bottom, Theme.PANEL)
-                    if (hovered) g.fill(rect.x, rect.y, rect.right, rect.bottom, Theme.HOVER)
-                    // Values that differ from the default get a colored bar on the left.
-                    if (!row.isDefault) g.fill(rect.x, rect.y, rect.x + 3, rect.bottom, Theme.ACCENT)
-
-                    val labelColor =
-                        when {
-                            row.error() != null -> Theme.ERROR
-                            row.isModified -> Theme.MODIFIED
-                            else -> Theme.TEXT
-                        }
-                    g.text(font, fittedLabel(entry, hovered), rect.x + LABEL_X, rect.y + (rect.height - 8) / 2, labelColor)
-                    row.extractControl(g, font, entry.control, mouseX, mouseY, delta)
-
-                    // Invalid values get a "!" next to the control, so the state does not rely on red alone.
-                    if (row.error() != null && !hovered) Theme.pattern(g, ERROR_MARK, errorMarkRect(entry), Theme.ERROR)
-                    if (hovered) extractRowIcons(g, entry, mouseX, mouseY)
-                    // The row selected with the arrow keys gets a white frame, unlike the lighter background on hover.
-                    if (row === selectedRow) g.outline(rect.x, rect.y, rect.width, rect.height, Theme.TEXT)
-                }
-            }
-        }
-        g.disableScissor()
-
-        scrollThumb(items())?.let { thumb ->
-            val thumbHovered = draggingScrollbar || scrollbarRect.contains(mouseX.toDouble(), mouseY.toDouble())
-            g.fill(thumb.x, content.y, thumb.right, content.bottom, Theme.PANEL)
-            g.fill(thumb.x, thumb.y, thumb.right, thumb.bottom, if (thumbHovered) Theme.TEXT else Theme.TEXT_DIM)
-        }
-    }
-
-    /** The space left of the control (and of the undo/reset buttons while they show). */
-    private fun labelSpace(
-        entry: Placed,
-        hovered: Boolean,
-    ): Int {
-        val row = entry.row ?: return 0
-        val right =
-            when {
-                hovered && row.showsUndo -> entry.undoIcon.x
-                hovered && !row.isDefault -> entry.resetIcon.x
-                row.error() != null -> errorMarkRect(entry).x
-                else -> entry.control.x
-            }
-        return right - 6 - (entry.rect.x + LABEL_X)
-    }
-
-    /** Where the "!" of an invalid row is drawn: just left of the control. */
-    private fun errorMarkRect(entry: Placed) = Rect(entry.control.x - 10, entry.rect.y, 6, entry.rect.height)
-
-    /** The label, marked with "*" while the row has a change that is not applied yet. */
-    private fun labelText(row: OptionRow): String = if (row.isModified) row.label.string + " *" else row.label.string
-
-    /** The label, cut with "…" if it would run into the control (e.g. long translations in small windows). */
-    private fun fittedLabel(
-        entry: Placed,
-        hovered: Boolean,
-    ): String {
-        val label = entry.row?.let(::labelText) ?: return ""
-        val space = labelSpace(entry, hovered)
-        if (font.width(label) <= space) return label
-        return font.plainSubstrByWidth(label, max(0, space - font.width(ELLIPSIS))).trimEnd() + ELLIPSIS
-    }
-
-    /** Draws the undo and reset icons of a hovered row, if they would change something. */
-    private fun extractRowIcons(
-        g: GuiGraphicsExtractor,
-        entry: Placed,
-        mouseX: Int,
-        mouseY: Int,
-    ) {
-        val row = entry.row ?: return
-        if (!row.isDefault) extractIcon(g, RESET_ICON, entry.resetIcon, mouseX, mouseY)
-        if (row.showsUndo) extractIcon(g, UNDO_ICON, entry.undoIcon, mouseX, mouseY)
-    }
-
-    /**
-     * Draws a small button with a pixel [icon] (one string per line, `X` = filled) centered in it.
-     * Pixel patterns instead of font glyphs, because the arrow glyphs come from the fallback font
-     * and are not centered reliably.
-     */
-    private fun extractIcon(
-        g: GuiGraphicsExtractor,
-        icon: List<String>,
-        rect: Rect,
-        mouseX: Int,
-        mouseY: Int,
-    ) {
-        val hovered = rect.contains(mouseX.toDouble(), mouseY.toDouble())
-        g.fill(rect.x, rect.y, rect.right, rect.bottom, Theme.PANEL_DARK)
-        if (hovered) g.outline(rect.x, rect.y, rect.width, rect.height, Theme.ACCENT)
-        Theme.pattern(g, icon, rect, if (hovered) Theme.ACCENT else Theme.TEXT)
-    }
-
-    private fun extractButtons(
-        g: GuiGraphicsExtractor,
-        mouseX: Int,
-        mouseY: Int,
-    ) {
-        val mx = mouseX.toDouble()
-        val my = mouseY.toDouble()
-        Theme.button(g, font, RESET_ALL, resetAllRect, resetAllRect.contains(mx, my), active = !allDefault)
-        // Cancel closes without applying; with unsaved changes it asks first, like Escape.
-        Theme.button(g, font, CommonComponents.GUI_CANCEL, cancelRect, cancelRect.contains(mx, my))
-        val count = modifiedCount
-        val apply = if (count > 0) APPLY.copy().append(" ($count)") else APPLY
-        Theme.button(g, font, apply, applyRect, applyRect.contains(mx, my), active = isDirty && !hasErrors)
-        Theme.button(g, font, CommonComponents.GUI_DONE, doneRect, doneRect.contains(mx, my), active = !hasErrors)
-    }
-
-    /** The id row whose text field is focused, with its position, if its suggestion list should show. */
-    private fun suggestionTarget(placed: List<Placed>): Pair<TextRow, Rect>? {
+    /** The suggestion list of the focused id field, if it shows. */
+    private fun openSuggestions(): SuggestionList.Open? {
         val box = focusedBox ?: return null
-        val entry = placed.firstOrNull { it.row?.editBox === box } ?: return null
-        val row = entry.row as? TextRow ?: return null
-        if (row.suggestions.isEmpty() || entry.rect.bottom < contentRect.y || entry.rect.y > contentRect.bottom) return null
-        return row to entry.control
-    }
-
-    /** The suggestion list of the focused id field and the position of each entry. */
-    private fun suggestionEntries(placed: List<Placed>): List<Pair<String, Rect>> {
-        val (row, control) = suggestionTarget(placed) ?: return emptyList()
-        val suggestions = row.matchingSuggestions().filter { it != row.editBox.value.trim() }
-        if (suggestions.isEmpty()) return emptyList()
-        val listHeight = suggestions.size * SUGGESTION_HEIGHT
-        val below = control.bottom - 3
-        val top = if (below + listHeight <= height - MARGIN) below else control.y + 3 - listHeight
-        return suggestions.mapIndexed { index, id ->
-            id to
-                Rect(control.x, top + index * SUGGESTION_HEIGHT, control.width, SUGGESTION_HEIGHT)
-        }
-    }
-
-    private fun extractSuggestions(
-        g: GuiGraphicsExtractor,
-        placed: List<Placed>,
-        mouseX: Int,
-        mouseY: Int,
-    ) {
-        val entries = suggestionEntries(placed)
-        if (entries.isEmpty()) return
-        suggestionIndex = suggestionIndex.coerceIn(0, entries.size - 1)
-        // Draw above the option rows, whose text would otherwise cover the list.
-        g.nextStratum()
-        val first = entries.first().second
-        val last = entries.last().second
-        g.fill(first.x, first.y, first.right, last.bottom, Theme.DROPDOWN)
-        g.outline(first.x, first.y, first.width, last.bottom - first.y, Theme.TEXT_DIM)
-        entries.forEachIndexed { index, (id, rect) ->
-            val hovered = rect.contains(mouseX.toDouble(), mouseY.toDouble())
-            if (hovered || index == suggestionIndex) g.fill(rect.x + 1, rect.y, rect.right - 1, rect.bottom, Theme.SELECTED)
-            g.text(font, font.plainSubstrByWidth(id, rect.width - 8), rect.x + 4, rect.y + 2, if (hovered) Theme.ACCENT else Theme.TEXT)
-        }
+        val target = list.placedRows().firstOrNull { it.row.editBox === box }?.takeIf(list::isOnScreen)
+        return suggestions.open(target, height - ScreenLayout.MARGIN)
     }
 
     private fun extractTooltips(
         g: GuiGraphicsExtractor,
-        placed: List<Placed>,
-        mouseX: Int,
-        mouseY: Int,
+        open: SuggestionList.Open?,
+        x: Double,
+        y: Double,
     ) {
-        val mx = mouseX.toDouble()
-        val my = mouseY.toDouble()
-        if (suggestionEntries(placed).any { it.second.contains(mx, my) }) return
+        if (open?.idAt(x, y) != null) return
 
-        if (hasErrors && (applyRect.contains(mx, my) || doneRect.contains(mx, my))) {
-            val button = if (applyRect.contains(mx, my)) applyRect else doneRect
-            tooltip(g, tipLines(Component.translatable("$KEY_PREFIX.invalid"), Theme.ERROR), button, centered = true)
-            return
-        }
-        if (resetAllRect.contains(mx, my)) {
-            tooltip(g, tipLines(Component.translatable("$KEY_PREFIX.resetAll.tooltip"), Theme.TEXT_SOFT), resetAllRect)
+        buttons.buttonAt(layout, x, y)?.let { button ->
+            val tip = buttons.tooltip(button) ?: return@let
+            tooltips.extract(g, layout, tooltips.lines(tip.text, tip.color), buttons.rectOf(layout, button), centered = true)
             return
         }
 
         // With the arrow keys, the selected row shows its description below itself, since there is no hover.
         if (keyboardMode) {
-            val selected = placed.firstOrNull { it.row != null && it.row === selectedRow }
-            if (selected != null && selected.rect.bottom > contentRect.y && selected.rect.y < contentRect.bottom) {
-                tooltip(g, tooltipLines(selected), selected.rect, selected.rect.x + LABEL_X, preferBelow = true)
-            }
+            val selected = list.placedRows().firstOrNull { it.row === selectedRow }?.takeIf(list::isOnScreen) ?: return
+            tooltips.extract(g, layout, tooltips.rowLines(selected), selected.rect, selected.labelX, preferBelow = true)
             return
         }
 
-        val entry = placedAt(mx, my)
-        val row = entry?.row
-        val now = Util.getMillis()
-        if (row != hoveredRow) {
-            hoveredRow = row
-            hoverStart = now
-            // Right after one tooltip, the next row shows its tooltip without the delay.
-            hoverInstant = now - lastTooltipAt < TOOLTIP_GRACE_MS
-        }
-        if (entry == null || row == null) return
+        val entry = list.rowAt(x, y)
+        // An invalid value explains itself at once when the mouse is on its control.
+        val force = entry != null && entry.row.error() != null && entry.control.contains(x, y)
+        val rowTipDue = tooltips.rowTooltipDue(entry?.row, force)
+        if (entry == null) return
 
         // The row tooltip stays while the reset or undo icon shows its own one; the two go on opposite sides of the row.
-        var rowTipBelow: Boolean? = null
-        if (hoverInstant || now - hoverStart >= TOOLTIP_DELAY_MS || (row.error() != null && entry.control.contains(mx, my))) {
-            rowTipBelow = tooltip(g, tooltipLines(entry), entry.rect, entry.rect.x + LABEL_X, preferBelow = true)
-            lastTooltipAt = now
+        var iconTipBelow = false
+        if (rowTipDue) {
+            val rowTipBelow = tooltips.extract(g, layout, tooltips.rowLines(entry), entry.rect, entry.labelX, preferBelow = true)
+            iconTipBelow = !rowTipBelow
         }
-        val (icon, text) =
-            when {
-                !row.isDefault && entry.resetIcon.contains(mx, my) -> entry.resetIcon to Component.translatable("$KEY_PREFIX.reset")
-                row.showsUndo && entry.undoIcon.contains(mx, my) -> entry.undoIcon to Component.translatable("$KEY_PREFIX.undo")
-                else -> return
-            }
-        tooltip(g, tipLines(text, Theme.ACCENT), icon, centered = true, preferBelow = rowTipBelow == false)
+        val icon = entry.iconAt(x, y) ?: return
+        val iconLines = tooltips.lines(icon.tooltip, Theme.ACCENT)
+        tooltips.extract(g, layout, iconLines, entry.rectOf(icon), centered = true, preferBelow = iconTipBelow)
     }
 
-    /** One tooltip line in [color]; a `null` [text] draws a thin divider. */
-    private class TipLine(
-        val text: FormattedCharSequence?,
-        val color: Int,
-    )
+    /** The mouse cursor for the element under the mouse, like vanilla widgets: a hand on clickable things, a text cursor on fields. */
+    private fun cursorAt(
+        open: SuggestionList.Open?,
+        x: Double,
+        y: Double,
+    ): CursorType? {
+        if (draggedRow != null) return CursorTypes.RESIZE_EW
+        if (list.draggingScrollbar) return CursorTypes.RESIZE_NS
+        if (open?.idAt(x, y) != null) return CursorTypes.POINTING_HAND
+        if (layout.search.contains(x, y)) return CursorTypes.IBEAM
+        buttons.buttonAt(layout, x, y)?.let { return if (buttons.isActive(it)) CursorTypes.POINTING_HAND else null }
+        if (sidebar.pageAt(layout, x, y) != null) return CursorTypes.POINTING_HAND
+        if (list.isOnScrollbar(x, y)) return CursorTypes.RESIZE_NS
 
-    /** [text] wrapped to the tooltip width, in [color]. */
-    private fun tipLines(
-        text: Component,
-        color: Int,
-    ): List<TipLine> = font.split(text, TOOLTIP_WIDTH).map { TipLine(it, color) }
-
-    /**
-     * Draws a tooltip in the style of the screen's panels next to [anchor], never at the mouse, so it does not cover
-     * the element it explains or the control under the mouse. It goes below or above the anchor as [preferBelow] says,
-     * and to the other side when it does not fit between the top of the screen and the bottom buttons.
-     * Its left edge is [x], or it is centered on the anchor when [centered]; it is kept on screen.
-     *
-     * @return whether the tooltip went below the anchor.
-     */
-    private fun tooltip(
-        g: GuiGraphicsExtractor,
-        lines: List<TipLine>,
-        anchor: Rect,
-        x: Int = anchor.x,
-        centered: Boolean = false,
-        preferBelow: Boolean = false,
-    ): Boolean {
-        val textWidth = lines.maxOf { line -> line.text?.let(font::width) ?: 0 }
-        val w = textWidth + 2 * TIP_PADDING
-        val h = lines.sumOf { if (it.text == null) TIP_DIVIDER else TIP_LINE } - (TIP_LINE - font.lineHeight) + 2 * TIP_PADDING
-        val fitsBelow = anchor.bottom + TIP_GAP + h <= bottomY - GAP
-        val fitsAbove = anchor.y - TIP_GAP - h >= MARGIN
-        val below = if (preferBelow) fitsBelow || !fitsAbove else !fitsAbove && fitsBelow
-        val left = (if (centered) anchor.x + (anchor.width - w) / 2 else x).coerceAtMost(width - MARGIN - w).coerceAtLeast(MARGIN)
-        val top = if (below) anchor.bottom + TIP_GAP else max(MARGIN, anchor.y - TIP_GAP - h)
-
-        // Above everything else, including the id suggestions.
-        g.nextStratum()
-        g.fill(left, top, left + w, top + h, Theme.DROPDOWN)
-        g.outline(left, top, w, h, Theme.TEXT_DIM)
-        var y = top + TIP_PADDING
-        for (line in lines) {
-            val text = line.text
-            if (text == null) {
-                g.fill(left + TIP_PADDING, y + TIP_DIVIDER / 2 - 1, left + w - TIP_PADDING, y + TIP_DIVIDER / 2, Theme.DIVIDER)
-                y += TIP_DIVIDER
-            } else {
-                g.text(font, text, left + TIP_PADDING, y, line.color)
-                y += TIP_LINE
-            }
+        val entry = list.rowAt(x, y) ?: return null
+        return when {
+            entry.iconAt(x, y) != null -> CursorTypes.POINTING_HAND
+            entry.row is ToggleRow -> CursorTypes.POINTING_HAND
+            entry.row.editBoxArea(entry.control)?.contains(x, y) == true -> CursorTypes.IBEAM
+            entry.control.contains(x, y) -> CursorTypes.POINTING_HAND
+            else -> null
         }
-        return below
     }
 
-    /**
-     * The tooltip of a row: the full label if it is cut, the description, then below a divider the default value
-     * and any error.
-     */
-    private fun tooltipLines(entry: Placed): List<TipLine> {
-        val row = entry.row ?: return emptyList()
-        val lines = mutableListOf<TipLine>()
-        if (font.width(labelText(row)) > labelSpace(entry, hovered = true)) lines += tipLines(row.label, Theme.TEXT)
-        lines += tipLines(row.description, Theme.TEXT_SOFT)
-        lines += TipLine(null, 0)
-        // Showing the default lets players judge a change without resetting it first.
-        val default = row.defaultText().copy().withColor(Theme.ACCENT)
-        lines += tipLines(Component.translatable("$KEY_PREFIX.default", default), Theme.TEXT_DIM)
-        row.error()?.let { lines += tipLines(it, Theme.ERROR) }
-        return lines
-    }
+    // Mouse
 
     override fun mouseClicked(
         event: MouseButtonEvent,
@@ -661,91 +212,46 @@ class GommemodeConfigScreen(
     ): Boolean {
         val x = event.x()
         val y = event.y()
-        val placed = placed()
         keyboardMode = false
-
-        suggestionEntries(placed).firstOrNull { it.second.contains(x, y) }?.let { (id, _) ->
-            (suggestionTarget(placed)?.first)?.accept(id)
-            // The clicked id is the choice now; a later Enter must not swap it for the highlighted suggestion.
-            suggestionIndex = 0
-            suggestionNavigated = false
-            return true
-        }
+        openSuggestions()?.let { if (suggestions.click(it, x, y)) return true }
 
         var newFocus: EditBox? = null
         var keyRowClicked: KeyRow? = null
+        val button = buttons.buttonAt(layout, x, y)
         when {
-            searchRect.contains(x, y) -> {
+            layout.search.contains(x, y) -> {
                 newFocus = searchBox
             }
 
-            cancelRect.contains(x, y) -> {
-                Theme.playClick()
-                onClose()
+            button != null -> {
+                if (buttons.isActive(button)) press(button)
             }
 
-            sidebarRect.contains(x, y) -> {
-                pages.indices.firstOrNull { pageRect(it).contains(x, y) }?.let { index ->
+            layout.sidebar.contains(x, y) -> {
+                sidebar.pageAt(layout, x, y)?.let { index ->
                     Theme.playClick()
-                    selectedPage = index
+                    list.selectedPage = index
                     searchBox.value = ""
-                    scroll = 0.0
                 }
             }
 
-            scrollThumb(items()) != null && scrollbarRect.contains(x, y) -> {
-                draggingScrollbar = true
-                scrollTo(y)
+            list.isOnScrollbar(x, y) -> {
+                list.startScrollbarDrag(y)
             }
 
-            contentRect.contains(x, y) -> {
-                val entry = placedAt(x, y)
-                val row = entry?.row
-                if (entry != null && row != null) {
+            else -> {
+                list.rowAt(x, y)?.let { entry ->
                     // The arrow keys continue from the row that was clicked last.
-                    selectedRow = row
-                    when {
-                        !row.isDefault && entry.resetIcon.contains(x, y) -> {
-                            Theme.playClick()
-                            row.reset()
-                        }
-
-                        row.showsUndo && entry.undoIcon.contains(x, y) -> {
-                            Theme.playClick()
-                            row.undo()
-                        }
-
-                        // A checkbox toggles from anywhere in its row.
-                        row is ToggleRow -> {
-                            row.clickControl(event, entry.control, doubleClick)
-                        }
-
-                        entry.control.contains(x, y) && row.clickControl(event, entry.control, doubleClick) -> {
-                            if (row is KeyRow) keyRowClicked = row
-                            if (row.editBoxArea(entry.control)?.contains(x, y) == true) {
-                                newFocus = row.editBox
-                            } else if (row is SliderRow<*>) {
-                                draggedRow = row
-                            }
+                    selectedRow = entry.row
+                    clickRow(entry, event)?.let { clicked ->
+                        if (clicked is KeyRow) keyRowClicked = clicked
+                        if (clicked.editBoxArea(entry.control)?.contains(x, y) == true) {
+                            newFocus = clicked.editBox
+                        } else if (clicked is SliderRow<*>) {
+                            draggedRow = clicked
                         }
                     }
                 }
-            }
-
-            resetAllRect.contains(x, y) && !allDefault -> {
-                Theme.playClick()
-                confirmResetAll()
-            }
-
-            applyRect.contains(x, y) && isDirty && !hasErrors -> {
-                Theme.playClick()
-                apply()
-            }
-
-            doneRect.contains(x, y) && !hasErrors -> {
-                Theme.playClick()
-                apply()
-                minecraft.gui.setScreen(parent)
             }
         }
 
@@ -755,18 +261,46 @@ class GommemodeConfigScreen(
         return true
     }
 
+    /** Handles a click on a row; returns the row if the click went to its control. */
+    private fun clickRow(
+        entry: PlacedRow,
+        event: MouseButtonEvent,
+    ): OptionRow? {
+        val row = entry.row
+        when (entry.iconAt(event.x(), event.y())) {
+            RowIcon.RESET -> {
+                Theme.playClick()
+                row.reset()
+            }
+
+            RowIcon.UNDO -> {
+                Theme.playClick()
+                row.undo()
+            }
+
+            null -> {
+                // A checkbox toggles from anywhere in its row.
+                if (row is ToggleRow) {
+                    row.clickControl(event, entry.control)
+                } else if (entry.control.contains(event.x(), event.y()) && row.clickControl(event, entry.control)) {
+                    return row
+                }
+            }
+        }
+        return null
+    }
+
     override fun mouseDragged(
         event: MouseButtonEvent,
         dx: Double,
         dy: Double,
     ): Boolean {
-        if (draggingScrollbar) {
-            scrollTo(event.y())
+        if (list.draggingScrollbar) {
+            list.dragScrollbar(event.y())
             return true
         }
         val row = draggedRow ?: return super.mouseDragged(event, dx, dy)
-        val entry = placed().firstOrNull { it.row === row } ?: return true
-        row.dragControl(event.x(), entry.control)
+        list.placedRows().firstOrNull { it.row === row }?.let { row.dragControl(event.x(), it.control) }
         return true
     }
 
@@ -781,7 +315,7 @@ class GommemodeConfigScreen(
 
     override fun mouseReleased(event: MouseButtonEvent): Boolean {
         draggedRow = null
-        draggingScrollbar = false
+        list.stopScrollbarDrag()
         return super.mouseReleased(event)
     }
 
@@ -791,16 +325,17 @@ class GommemodeConfigScreen(
         scrollX: Double,
         scrollY: Double,
     ): Boolean {
+        // Shift + wheel over a control changes its value instead of scrolling.
         if (minecraft.hasShiftDown()) {
-            val entry = placedAt(mouseX, mouseY)
-            if (entry != null && entry.control.contains(mouseX, mouseY) && entry.row?.scrollControl(scrollY) == true) return true
+            val entry = list.rowAt(mouseX, mouseY)
+            if (entry != null && entry.control.contains(mouseX, mouseY) && entry.row.scrollControl(scrollY)) return true
         }
-        if (contentRect.contains(mouseX, mouseY)) {
-            scroll = (scroll - scrollY * ITEM_HEIGHT).coerceIn(0.0, maxScroll(items()))
-            return true
-        }
-        return false
+        if (!layout.content.contains(mouseX, mouseY)) return false
+        list.scrollBy(scrollY)
+        return true
     }
+
+    // Keyboard
 
     override fun keyPressed(event: KeyEvent): Boolean {
         suppressNextChar = false
@@ -819,66 +354,11 @@ class GommemodeConfigScreen(
             return true
         }
 
-        val box = focusedBox
-        if (box != null) {
-            val row = allRows.firstOrNull { it.editBox === box } as? TextRow
-            val suggestions = suggestionEntries(placed())
-            when (event.key()) {
-                InputConstants.KEY_ESCAPE -> {
-                    // The search field is focused by default, so Escape there closes the screen like in vanilla.
-                    if (box === searchBox) onClose() else focus(null)
-                }
-
-                InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
-                    if (row != null &&
-                        suggestions.isNotEmpty() &&
-                        // A valid typed id stays; a suggestion only replaces it when picked or when the id is invalid.
-                        (row.error() != null || suggestionNavigated)
-                    ) {
-                        row.accept(suggestions[suggestionIndex.coerceIn(suggestions.indices)].first)
-                    }
-                    focus(null)
-                }
-
-                InputConstants.KEY_TAB -> {
-                    if (row != null &&
-                        suggestions.isNotEmpty()
-                    ) {
-                        row.accept(suggestions[suggestionIndex.coerceIn(suggestions.indices)].first)
-                    }
-                }
-
-                InputConstants.KEY_DOWN -> {
-                    when {
-                        suggestions.isNotEmpty() -> {
-                            suggestionIndex = (suggestionIndex + 1) % suggestions.size
-                            suggestionNavigated = true
-                        }
-                        // From the search field, Down moves into the option list.
-                        box === searchBox -> {
-                            focus(null)
-                            visibleRows().firstOrNull()?.let(::select)
-                        }
-                    }
-                }
-
-                InputConstants.KEY_UP -> {
-                    if (suggestions.isNotEmpty()) {
-                        suggestionIndex = (suggestionIndex - 1 + suggestions.size) % suggestions.size
-                        suggestionNavigated = true
-                    }
-                }
-
-                else -> {
-                    box.keyPressed(event)
-                    suggestionIndex = 0
-                    suggestionNavigated = false
-                }
-            }
+        focusedBox?.let { box ->
+            fieldKeyPressed(box, event)
             return true
         }
-
-        if (handleNavigation(event)) return true
+        if (navigationKeyPressed(event)) return true
 
         if (event.key() == InputConstants.KEY_ESCAPE) {
             onClose()
@@ -887,26 +367,65 @@ class GommemodeConfigScreen(
         return super.keyPressed(event)
     }
 
-    /** The option rows currently listed (the selected page, or the search results). */
-    private fun visibleRows(): List<OptionRow> = items().mapNotNull { (it as? RowItem)?.row }
+    /** Keys while the text field [box] has focus; Up, Down, Enter and Tab also work the suggestion list. */
+    private fun fieldKeyPressed(
+        box: EditBox,
+        event: KeyEvent,
+    ) {
+        val open = openSuggestions()
+        when (event.key()) {
+            InputConstants.KEY_ESCAPE -> {
+                // The search field is focused by default, so Escape there closes the screen like in vanilla.
+                if (box === searchBox) onClose() else focus(null)
+            }
+
+            InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
+                open?.let(suggestions::acceptOnEnter)
+                focus(null)
+            }
+
+            InputConstants.KEY_TAB -> {
+                open?.let(suggestions::acceptHighlighted)
+            }
+
+            InputConstants.KEY_DOWN -> {
+                when {
+                    open != null -> {
+                        suggestions.move(open, 1)
+                    }
+
+                    // From the search field, Down moves into the option list.
+                    box === searchBox -> {
+                        focus(null)
+                        list.visibleRows().firstOrNull()?.let(::select)
+                    }
+                }
+            }
+
+            InputConstants.KEY_UP -> {
+                open?.let { suggestions.move(it, -1) }
+            }
+
+            else -> {
+                box.keyPressed(event)
+                suggestions.reset()
+            }
+        }
+    }
 
     /** Selects [row] for the keyboard and scrolls it into view. */
     private fun select(row: OptionRow) {
         selectedRow = row
         keyboardMode = true
-        val content = contentRect
-        val rect = placed().firstOrNull { it.row === row }?.rect ?: return
-        if (rect.y < content.y) scroll -= content.y - rect.y
-        if (rect.bottom > content.bottom) scroll += rect.bottom - content.bottom
-        scroll = scroll.coerceIn(0.0, maxScroll(items()))
+        list.scrollIntoView(row)
     }
 
     /**
      * Keyboard control of the option list: Up/Down select a row (Up from the first row returns to the search),
      * Left/Right change its value, Enter/Space toggles, cycles, edits or rebinds it, Tab switches pages.
      */
-    private fun handleNavigation(event: KeyEvent): Boolean {
-        val rows = visibleRows()
+    private fun navigationKeyPressed(event: KeyEvent): Boolean {
+        val rows = list.visibleRows()
         val current = selectedRow?.takeIf { it in rows }
         when (event.key()) {
             InputConstants.KEY_DOWN -> {
@@ -944,11 +463,10 @@ class GommemodeConfigScreen(
             }
 
             InputConstants.KEY_TAB -> {
-                if (query.isNotEmpty()) return false
+                if (list.query.isNotEmpty()) return false
                 val step = if (event.hasShiftDown()) -1 else 1
-                selectedPage = (selectedPage + step + pages.size) % pages.size
-                scroll = 0.0
-                visibleRows().firstOrNull()?.let(::select)
+                list.selectedPage = Math.floorMod(list.selectedPage + step, pages.size)
+                list.visibleRows().firstOrNull()?.let(::select)
             }
 
             else -> {
@@ -963,10 +481,8 @@ class GommemodeConfigScreen(
             suppressNextChar = false
             return true
         }
-        val box = focusedBox
-        if (box != null) {
-            suggestionIndex = 0
-            suggestionNavigated = false
+        focusedBox?.let { box ->
+            suggestions.reset()
             return box.charTyped(event)
         }
         // Typing without a focused field starts a search.
@@ -986,39 +502,25 @@ class GommemodeConfigScreen(
         }
         focusedBox = box
         box?.isFocused = true
-        suggestionIndex = 0
-        suggestionNavigated = false
+        suggestions.reset()
     }
+
+    // Applying and closing
 
     /** Asks before resetting every option, including the toggle key, to its default; the dialog names how many change. */
     private fun confirmResetAll() {
-        minecraft.gui.setScreen(
-            ConfirmScreen(
-                { confirmed ->
-                    if (confirmed) allRows.forEach { it.reset() }
-                    minecraft.gui.setScreen(this)
-                },
-                Component.translatable("$KEY_PREFIX.resetAll.title"),
-                Component.translatable("$KEY_PREFIX.resetAll.message", allRows.count { !it.isDefault }),
-                Component.translatable("$KEY_PREFIX.resetAll.confirm"),
-                Component.translatable("$KEY_PREFIX.resetAll.keep"),
-            ),
+        confirm(
+            "resetAll",
+            summary.nonDefaultCount,
+            onConfirm = { allRows.forEach { it.reset() } },
+            next = { this },
         )
     }
 
     /** Makes the edited values the active config, saves it and applies it to a running Gommemode. */
     private fun apply() {
-        if (hasErrors) return
-        ConfigManager.update(state.pending)
-        state.saved = ConfigManager.copyOf(ConfigManager.config)
-
-        val keyMapping = state.keyMapping
-        if (keyMapping != null && state.pendingKey != state.savedKey) {
-            keyMapping.setKey(state.pendingKey)
-            KeyMapping.resetMapping()
-            minecraft.options.save()
-            state.savedKey = state.pendingKey
-        }
+        if (summary.hasErrors) return
+        state.apply()
 
         GommemodeManager.onConfigChanged()
         Gommemode.LOGGER.debug("Applied config from the config screen")
@@ -1026,80 +528,34 @@ class GommemodeConfigScreen(
 
     /** Closes the screen; asks first if there are changes that were not applied. */
     override fun onClose() {
-        if (!isDirty) {
+        if (!summary.isDirty) {
             minecraft.gui.setScreen(parent)
             return
         }
-        minecraft.gui.setScreen(
-            ConfirmScreen(
-                { discard -> minecraft.gui.setScreen(if (discard) parent else this) },
-                Component.translatable("$KEY_PREFIX.discard.title"),
-                Component.translatable("$KEY_PREFIX.discard.message", allRows.count { it.isModified }),
-                Component.translatable("$KEY_PREFIX.discard.confirm"),
-                Component.translatable("$KEY_PREFIX.discard.keep"),
-            ),
-        )
+        confirm("discard", summary.modifiedCount, onConfirm = {}, next = { confirmed -> if (confirmed) parent else this })
     }
 
-    private companion object {
-        const val MARGIN = 8
-        const val GAP = 6
-        const val BUTTON_HEIGHT = 20
-        const val ITEM_HEIGHT = 20
-        const val SIDEBAR_HEADER = 30
-        const val PAGE_HEIGHT = 18
-        const val SCROLLBAR_SPACE = 5
-        const val SUGGESTION_HEIGHT = 12
-        const val TOOLTIP_WIDTH = 220
-        const val TIP_PADDING = 5
-        const val TIP_LINE = 10
-        const val TIP_DIVIDER = 7
-        const val TIP_GAP = 3
-        const val TOOLTIP_DELAY_MS = 500L
-        const val TOOLTIP_GRACE_MS = 300L
-
-        /** The page shown when the screen opens; remembered while the game runs. */
-        var lastPage = 0
-
-        /** An exclamation mark: the row or page has an invalid value. */
-        val ERROR_MARK = listOf("XX", "XX", "XX", "XX", "..", "XX")
-        const val ICON_SIZE = 16
-        const val HEADER_HEIGHT = 26
-        const val LABEL_X = 8
-        const val ELLIPSIS = "…"
-
-        /** A circular arrow: back to the default. */
-        val RESET_ICON =
-            listOf(
-                "...XXXX...",
-                ".XX....X.X",
-                ".X......XX",
-                "X.....XXXX",
-                "X........X",
-                "X........X",
-                "X........X",
-                ".X......X.",
-                ".XX....XX.",
-                "...XXXX...",
-            )
-
-        /** A hooked arrow pointing left: undo the change. */
-        val UNDO_ICON =
-            listOf(
-                "...X......",
-                "..XX......",
-                ".XXXXXXX..",
-                "..XX....X.",
-                "...X.....X",
-                ".........X",
-                ".........X",
-                "........X.",
-                "......XX..",
-                "....XX....",
-            )
-
-        val ICON: Identifier = Identifier.fromNamespaceAndPath(Gommemode.MOD_ID, "icon.png")
-        val RESET_ALL: Component = Component.translatable("$KEY_PREFIX.resetAll")
-        val APPLY: Component = Component.translatable("$KEY_PREFIX.apply")
+    /**
+     * Shows the confirmation dialog [key] (with title, message, confirm and keep texts) naming [count] options.
+     * On confirmation it runs [onConfirm]; either way it then shows the screen [next] returns.
+     */
+    private fun confirm(
+        key: String,
+        count: Int,
+        onConfirm: () -> Unit,
+        next: (confirmed: Boolean) -> Screen?,
+    ) {
+        minecraft.gui.setScreen(
+            ConfirmScreen(
+                { confirmed ->
+                    if (confirmed) onConfirm()
+                    minecraft.gui.setScreen(next(confirmed))
+                },
+                Component.translatable("$KEY_PREFIX.$key.title"),
+                Component.translatable("$KEY_PREFIX.$key.message", count),
+                Component.translatable("$KEY_PREFIX.$key.confirm"),
+                Component.translatable("$KEY_PREFIX.$key.keep"),
+            ),
+        )
     }
 }
