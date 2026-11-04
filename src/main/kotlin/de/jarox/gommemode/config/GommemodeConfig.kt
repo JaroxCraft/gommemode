@@ -241,6 +241,15 @@ object ConfigManager {
         if (!readFailed) save()
     }
 
+    /** An independent copy of [source], e.g. for the config screen to edit without touching the active config. */
+    fun copyOf(source: GommemodeConfig): GommemodeConfig = gson.fromJson(gson.toJsonTree(source), GommemodeConfig::class.java)
+
+    /** Makes a sanitized copy of [newConfig] the active configuration and writes it to disk. */
+    fun update(newConfig: GommemodeConfig) {
+        config = copyOf(newConfig).sanitize()
+        save()
+    }
+
     /**
      * Writes the current configuration to disk.
      *
