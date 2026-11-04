@@ -192,10 +192,10 @@ object Config {
         )
         category.addEntry(
             entries
-                .startBooleanToggle(label("pauseMusic"), config.pauseMusic)
-                .setDefaultValue(defaults.pauseMusic)
-                .setTooltip(tooltip("pauseMusic"))
-                .setSaveConsumer { config.pauseMusic = it }
+                .startBooleanToggle(label("stopMusic"), config.stopMusic)
+                .setDefaultValue(defaults.stopMusic)
+                .setTooltip(tooltip("stopMusic"))
+                .setSaveConsumer { config.stopMusic = it }
                 .build(),
         )
     }
