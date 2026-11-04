@@ -235,6 +235,8 @@ object GommemodeManager {
         }
 
         val positional = config.positionalSound
+        // A non-positional sound is played relative to the listener, at its origin.
+        val position = if (positional) location else Vec3.ZERO
         // canStartSilent: keep the song "running" even at zero volume, so song-end detection
         // still works when the volume or the sound category is muted.
         val sound =
@@ -247,9 +249,9 @@ object GommemodeManager {
                 false,
                 0,
                 if (positional) SoundInstance.Attenuation.LINEAR else SoundInstance.Attenuation.NONE,
-                if (positional) location.x else 0.0,
-                if (positional) location.y else 0.0,
-                if (positional) location.z else 0.0,
+                position.x,
+                position.y,
+                position.z,
                 !positional,
             ) {
                 override fun canStartSilent(): Boolean = true

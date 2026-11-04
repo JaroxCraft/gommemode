@@ -68,13 +68,9 @@ class GommeEntityRenderer(
         val offHandEmpty = entity.getItemBySlot(EquipmentSlot.OFFHAND).isEmpty
         val offArmPose =
             if (offHandEmpty && config.offArmPose == HumanoidModel.ArmPose.ITEM) HumanoidModel.ArmPose.EMPTY else config.offArmPose
-        if (config.mainArm == HumanoidArm.RIGHT) {
-            renderState.rightArmPose = config.mainArmPose
-            renderState.leftArmPose = offArmPose
-        } else {
-            renderState.leftArmPose = config.mainArmPose
-            renderState.rightArmPose = offArmPose
-        }
+        val mainIsRight = config.mainArm == HumanoidArm.RIGHT
+        renderState.rightArmPose = if (mainIsRight) config.mainArmPose else offArmPose
+        renderState.leftArmPose = if (mainIsRight) offArmPose else config.mainArmPose
     }
 
     /** The configured shadow radius, scaled with the entity. */
