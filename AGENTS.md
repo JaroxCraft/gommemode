@@ -36,9 +36,9 @@ On Windows (PowerShell), omit the `./` prefix.
 |---------------------------|----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Build                     | push / PR to `master`                        | `./gradlew build`                                                                                                                                                                                         |
 | Lint                      | push / PR to `master`                        | `./gradlew ktlintCheck`                                                                                                                                                                                   |
+| Run Client                | push / PR to `master`                        | starts `./gradlew runClient` headless (xvfb) and checks the log                                                                                                                                           |
 | Release                   | `v*` tag push                                | validates tag matches `mod_version` (`gradle.properties`) + `minecraft` (`gradle/libs.versions.toml`), then `./gradlew build`, `./gradlew modrinth`, `./gradlew modrinthSyncBody`, creates GitHub Release |
 | Renovate Config Validator | changes to `renovate.json`                   | validates config                                                                                                                                                                                          |
-| OpenCode                  | issue / PR comment with `/oc` or `/opencode` | runs OpenCode agent                                                                                                                                                                                       |
 | Sync Modrinth Body        | manual (`workflow_dispatch`)                 | `./gradlew modrinthSyncBody`                                                                                                                                                                              |
 
 Release tag format: `v<mod_version>+<minecraft_version>` (e.g. `v0.1.0+26.1.2`). If `mod_version` contains `-`, the
@@ -67,14 +67,22 @@ Configuration in `renovate.json`:
 - Configuration:
     - `config/GommemodeConfig.kt`: all options with defaults and ranges (`GommemodeConfig`), plus `ConfigManager`,
       which loads/saves `config/gommemode.json` with Gson.
-    - `config/screen/`: the config screen, drawn by the mod itself (no config library). `ConfigPages.kt` defines the
-      pages, groups and option rows; `OptionRows.kt` has the row types (toggle, enum, slider, text/id, color, key);
-      `GommemodeConfigScreen.kt` does layout, search, input, apply and reset. The screen edits a copy of the config
-      and writes it with `ConfigManager.update()` on "Apply"/"Done".
+    - `config/screen/`: the config screen, drawn by the mod itself (no config library):
+        - `GommemodeConfigScreen.kt` owns the edit state (`EditState.kt`), routes input and handles apply, reset and
+          closing. `ScreenLayout.kt` computes all positions; `ConfigPages.kt` defines the pages, groups and option rows.
+        - `rows/`: the option row types. `OptionRow.kt` is the base class, `ChoiceRows.kt` has toggle, enum and key,
+          `InputRows.kt` has slider, text/id and color.
+        - `components/`: the parts of the screen: `OptionList`, `Sidebar`, `SearchField`, `ButtonBar`,
+          `SuggestionList` (id suggestions) and `Tooltips`.
+        - `theme/`: colors and drawing helpers (`Theme`), pixel icons (`Icons`) and `Rect`.
+        - The screen edits a copy of the config and writes it with `ConfigManager.update()` on "Apply"/"Done".
     - Code reads options from `ConfigManager.config` at the time it needs them. After the screen applies its changes,
       `GommemodeManager.onConfigChanged()` applies changes to a running Gommemode.
-    - A new option needs: a field in `GommemodeConfig` (clamped in `sanitize()` if it has a range), a row in
-      `config/screen/ConfigPages.kt`, and label + tooltip keys in both `en_us.json` and `de_de.json`.
+    - A new option needs:
+        - a field in `GommemodeConfig`; a number also needs a range constant in its companion, which `sanitize()`
+          clamps to and the slider uses,
+        - a row in `config/screen/ConfigPages.kt`,
+        - label + tooltip keys in both `en_us.json` and `de_de.json`.
 - Main source lives under `src/main/kotlin/de/jarox/gommemode/`.
 
 ## Agent Behavior
