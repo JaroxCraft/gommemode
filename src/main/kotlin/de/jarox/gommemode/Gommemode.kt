@@ -84,9 +84,7 @@ class Gommemode :
 
     private fun registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register { client: Minecraft ->
-            val player = client.player ?: return@register
-            val level = client.level ?: return@register
-            GommemodeManager.tick(player, level)
+            client.player?.let(GommemodeManager::tick)
             handleKeyMappingClick(client)
         }
     }
@@ -105,7 +103,7 @@ class Gommemode :
             GommemodeManager.reset()
         }
         ClientPlayConnectionEvents.JOIN.register { _, _, _ ->
-            GommemodeManager.reset(joining = true)
+            GommemodeManager.reset()
         }
     }
 

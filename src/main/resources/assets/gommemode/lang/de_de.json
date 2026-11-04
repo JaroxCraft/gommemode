@@ -21,8 +21,6 @@
   "config.gommemode.option.toggleCooldownMs.tooltip": "Minimale Zeit zwischen zwei Umschaltungen in Millisekunden.",
   "config.gommemode.option.songEndBehavior": "Wenn das Lied endet",
   "config.gommemode.option.songEndBehavior.tooltip": "Was passiert, wenn die Gomme-Hymne bei aktivem Gommemode zu Ende ist.",
-  "config.gommemode.option.activateOnJoin": "Beim Betreten aktivieren",
-  "config.gommemode.option.activateOnJoin.tooltip": "Gommemode automatisch einschalten, wenn du eine Welt oder einen Server betrittst.",
   "config.gommemode.option.messageDisplay": "Umschalt-Nachricht",
   "config.gommemode.option.messageDisplay.tooltip": "Wo eine Nachricht angezeigt wird, wenn der Gommemode ein- oder ausgeschaltet wird.",
   "config.gommemode.option.soundEnabled": "Lied abspielen",
