@@ -263,7 +263,7 @@ class GommemodeConfigScreen(
         val row = entry.row ?: return null
         return when {
             !row.isDefault && entry.resetIcon.contains(x, y) -> CursorTypes.POINTING_HAND
-            row.isModified && entry.undoIcon.contains(x, y) -> CursorTypes.POINTING_HAND
+            row.showsUndo && entry.undoIcon.contains(x, y) -> CursorTypes.POINTING_HAND
             row is ToggleRow -> CursorTypes.POINTING_HAND
             row.editBoxArea(entry.control)?.contains(x, y) == true -> CursorTypes.IBEAM
             entry.control.contains(x, y) -> CursorTypes.POINTING_HAND
@@ -412,7 +412,7 @@ class GommemodeConfigScreen(
         val row = entry.row ?: return 0
         val right =
             when {
-                hovered && row.isModified -> entry.undoIcon.x
+                hovered && row.showsUndo -> entry.undoIcon.x
                 hovered && !row.isDefault -> entry.resetIcon.x
                 row.error() != null -> errorMarkRect(entry).x
                 else -> entry.control.x
@@ -446,7 +446,7 @@ class GommemodeConfigScreen(
     ) {
         val row = entry.row ?: return
         if (!row.isDefault) extractIcon(g, RESET_ICON, entry.resetIcon, mouseX, mouseY)
-        if (row.isModified) extractIcon(g, UNDO_ICON, entry.undoIcon, mouseX, mouseY)
+        if (row.showsUndo) extractIcon(g, UNDO_ICON, entry.undoIcon, mouseX, mouseY)
     }
 
     /**
@@ -577,7 +577,7 @@ class GommemodeConfigScreen(
         val (icon, text) =
             when {
                 !row.isDefault && entry.resetIcon.contains(mx, my) -> entry.resetIcon to Component.translatable("$KEY_PREFIX.reset")
-                row.isModified && entry.undoIcon.contains(mx, my) -> entry.undoIcon to Component.translatable("$KEY_PREFIX.undo")
+                row.showsUndo && entry.undoIcon.contains(mx, my) -> entry.undoIcon to Component.translatable("$KEY_PREFIX.undo")
                 else -> return
             }
         tooltip(g, tipLines(text, Theme.ACCENT), icon, centered = true, preferBelow = rowTipBelow == false)
@@ -707,7 +707,7 @@ class GommemodeConfigScreen(
                             row.reset()
                         }
 
-                        row.isModified && entry.undoIcon.contains(x, y) -> {
+                        row.showsUndo && entry.undoIcon.contains(x, y) -> {
                             Theme.playClick()
                             row.undo()
                         }

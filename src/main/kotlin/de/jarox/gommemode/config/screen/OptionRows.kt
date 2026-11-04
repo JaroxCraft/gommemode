@@ -60,6 +60,12 @@ internal abstract class OptionRow(
     /** Whether the edited value equals the default. */
     abstract val isDefault: Boolean
 
+    /** Whether the applied value equals the default. */
+    protected abstract val isSavedDefault: Boolean
+
+    /** Whether the undo button is shown: only when undo would not do the same as reset. */
+    val showsUndo: Boolean get() = isModified && !isSavedDefault
+
     /** Goes back to the applied value. */
     abstract fun undo()
 
@@ -137,6 +143,7 @@ internal abstract class PropertyRow<T>(
 
     override val isModified: Boolean get() = value != property.get(state.saved)
     override val isDefault: Boolean get() = value == defaultValue
+    override val isSavedDefault: Boolean get() = property.get(state.saved) == defaultValue
 
     override fun undo() {
         value = property.get(state.saved)
@@ -516,6 +523,7 @@ internal class KeyRow(
     override val controlWidth = 80
     override val isModified: Boolean get() = state.pendingKey != state.savedKey
     override val isDefault: Boolean get() = state.pendingKey == keyMapping.defaultKey
+    override val isSavedDefault: Boolean get() = state.savedKey == keyMapping.defaultKey
 
     override fun defaultText(): Component = keyMapping.defaultKey.displayName
 
