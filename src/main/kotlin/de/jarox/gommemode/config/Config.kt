@@ -62,6 +62,7 @@ object Config {
         return builder.build()
     }
 
+    /** Adds the enable switch, toggle key, cooldown, song-end behavior and message options. */
     private fun addGeneralOptions(
         category: ConfigCategory,
         entries: ConfigEntryBuilder,
@@ -109,6 +110,7 @@ object Config {
         )
     }
 
+    /** Builds the toggle key field; saving it rebinds the vanilla key mapping and saves the options. */
     private fun keyEntry(
         entries: ConfigEntryBuilder,
         keyMapping: KeyMapping,
@@ -127,8 +129,10 @@ object Config {
             }
         }.build()
 
+    /** The key this mapping is currently bound to. */
     private fun KeyMapping.boundKey() = KeyMappingHelper.getBoundKeyOf(this)
 
+    /** Adds the song, volume, pitch, sound category and positional sound options. */
     private fun addSoundOptions(
         category: ConfigCategory,
         entries: ConfigEntryBuilder,
@@ -188,6 +192,7 @@ object Config {
         )
     }
 
+    /** Adds the spawn location, spawn distance and fluid targeting options. */
     private fun addSpawnOptions(
         category: ConfigCategory,
         entries: ConfigEntryBuilder,
@@ -223,6 +228,7 @@ object Config {
         )
     }
 
+    /** Adds the particle switch, type, sphere radius and spacing options. */
     private fun addParticleOptions(
         category: ConfigCategory,
         entries: ConfigEntryBuilder,
@@ -264,6 +270,7 @@ object Config {
         )
     }
 
+    /** Adds the held items, arm, pose, look, scale, shadow, name tag and glow options. */
     private fun addEntityOptions(
         category: ConfigCategory,
         entries: ConfigEntryBuilder,
@@ -407,20 +414,26 @@ object Config {
             .map(Identifier::toString)
             .sorted()
 
+    /** Gets or creates the category with the translated name for [name]. */
     private fun ConfigBuilder.category(name: String): ConfigCategory =
         getOrCreateCategory(Component.translatable("$KEY_PREFIX.category.$name"))
 
+    /** The translated label of [option]. */
     private fun label(option: String): Component = Component.translatable("$KEY_PREFIX.option.$option")
 
+    /** The translated tooltip of [option]. */
     private fun tooltip(option: String): Component = Component.translatable("$KEY_PREFIX.option.$option.tooltip")
 
+    /** Formats a slider value as a percentage. */
     private fun percent(value: Int): Component = Component.literal("$value %")
 
+    /** The translated name of an enum value, keyed by its class and constant name. */
     private fun enumName(value: Enum<*>): Component =
         Component.translatable(
             "$KEY_PREFIX.enum.${value.javaClass.simpleName.lowercase(Locale.ROOT)}.${value.name.lowercase(Locale.ROOT)}",
         )
 
+    /** Accepts an empty field or a known item id; rejects air and unknown ids. */
     private fun validateItem(id: String): Optional<Component> =
         when {
             id.isBlank() -> Optional.empty()
@@ -430,6 +443,7 @@ object Config {
             else -> Optional.of(Component.translatable("$KEY_PREFIX.error.unknownItem", id.trim()))
         }
 
+    /** Accepts only known particle ids that need no extra parameters. */
     private fun validateParticle(id: String): Optional<Component> {
         val particle =
             Identifier

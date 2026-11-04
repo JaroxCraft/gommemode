@@ -13,6 +13,7 @@ import net.fabricmc.loader.api.FabricLoader
  * (the config file `config/gommemode.json` can still be edited by hand).
  */
 class ModMenuApiImpl : ModMenuApi {
+    /** The Cloth Config screen, or no screen if Cloth Config is not installed. */
     override fun getModConfigScreenFactory(): ConfigScreenFactory<*> {
         if (!FabricLoader.getInstance().isModLoaded(CLOTH_CONFIG_MOD_ID)) {
             Gommemode.LOGGER.debug("Cloth Config is not installed, no config screen available")

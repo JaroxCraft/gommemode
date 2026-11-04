@@ -130,6 +130,7 @@ class GommemodeConfig {
         return this
     }
 
+    /** This value, or [fallback] if it is NaN or infinite. */
     private fun Double.finiteOr(fallback: Double): Double = if (isFinite()) this else fallback
 
     companion object {
@@ -161,6 +162,7 @@ class GommemodeConfig {
  * An unparsable value falls back to white instead of discarding the whole config.
  */
 internal class HexColorAdapter : TypeAdapter<Int>() {
+    /** Writes the color as `#RRGGBB`. */
     override fun write(
         out: JsonWriter,
         value: Int,
@@ -168,6 +170,7 @@ internal class HexColorAdapter : TypeAdapter<Int>() {
         out.value("#%06X".format(value and 0xFFFFFF))
     }
 
+    /** Reads `#RRGGBB`, `RRGGBB` or a plain number; anything else becomes white. */
     override fun read(reader: JsonReader): Int =
         when (reader.peek()) {
             JsonToken.NUMBER -> {

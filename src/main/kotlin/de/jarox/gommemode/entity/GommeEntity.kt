@@ -56,18 +56,23 @@ class GommeEntity(
         // Intentionally no-op: this entity's equipment is managed by getItemBySlot
     }
 
+    /** The configured main arm. */
     override fun getMainArm(): HumanoidArm = ConfigManager.config.mainArm
 
+    /** Whether the glowing outline is enabled in the config. */
     override fun isCurrentlyGlowing(): Boolean = ConfigManager.config.glowing
 
+    /** The configured outline color. */
     override fun getTeamColor(): Int = ConfigManager.config.glowColor
 
+    /** Applies the configured scale and turns towards the player every tick. */
     override fun baseTick() {
         super.baseTick()
         applyScale()
         faceLocalPlayer()
     }
 
+    /** Sets the `minecraft:scale` attribute to the configured scale when it changed. */
     private fun applyScale() {
         val attribute = getAttribute(Attributes.SCALE) ?: return
         val scale = ConfigManager.config.scale
@@ -95,6 +100,7 @@ class GommeEntity(
         private var id: String? = null
         private var stack: ItemStack = ItemStack.EMPTY
 
+        /** The stack for [newId], resolved again only when the id changed. */
         fun get(newId: String): ItemStack {
             if (newId != id) {
                 id = newId
