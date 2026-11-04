@@ -90,7 +90,7 @@ class GommemodeConfig {
     var mainArm: HumanoidArm = HumanoidArm.RIGHT
     var mainArmPose: HumanoidModel.ArmPose = HumanoidModel.ArmPose.ITEM
     var lookAtPlayer: Boolean = true
-    var lookTarget: LookTarget = LookTarget.FEET
+    var lookTarget: LookTarget = LookTarget.EYES
     var scale: Double = 1.0
     var shadowRadius: Double = 0.5
     var showNameTag: Boolean = false
