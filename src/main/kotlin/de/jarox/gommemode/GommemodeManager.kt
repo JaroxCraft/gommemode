@@ -43,9 +43,6 @@ object GommemodeManager {
     // Client-only entity: negative so it can never collide with a server-assigned ID.
     private const val GOMME_ENTITY_ID: Int = -1_000_000
 
-    // Minimum time between two starts of a looping song.
-    private const val MIN_LOOP_INTERVAL_MS: Long = 1000L
-
     var isActive: Boolean = false
         private set
 
@@ -93,7 +90,7 @@ object GommemodeManager {
             SongEndBehavior.LOOP -> {
                 // If the sound cannot play at all (e.g. no audio device), it "ends" right away.
                 // Wait between restarts instead of starting it again every tick.
-                if (System.currentTimeMillis() >= songStartTime + MIN_LOOP_INTERVAL_MS) {
+                if (System.currentTimeMillis() >= songStartTime + ConfigManager.config.loopIntervalMs) {
                     spawnLocation?.let(::playSong)
                 }
             }

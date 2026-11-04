@@ -42,7 +42,7 @@ The entity spawns at the location your crosshair is pointing at, up to 5 blocks 
 
 With [ModMenu](https://modrinth.com/mod/modmenu) and [Cloth Config API](https://modrinth.com/mod/cloth-config) installed, open Mods → Gommemode → Config. All options are also stored in `config/gommemode.json`.
 
-- **General**: enable/disable the mod, toggle key, toggle cooldown, what happens when the song ends (deactivate, loop, keep entity), toggle message (off, action bar, chat)
+- **General**: enable/disable the mod, toggle key, toggle cooldown, what happens when the song ends (deactivate, loop, keep entity), loop interval, toggle message (off, action bar, chat)
 - **Sound**: play song, volume, pitch, sound category, positional or global sound, stop the game music
 - **Spawning**: spawn at crosshair or at the player, spawn distance, whether the crosshair stops at fluids
 - **Particles**: on/off, particle type, sphere radius, particle spacing

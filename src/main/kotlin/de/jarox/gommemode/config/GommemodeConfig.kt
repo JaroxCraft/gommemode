@@ -63,6 +63,7 @@ class GommemodeConfig {
     var enabled: Boolean = true
     var toggleCooldownMs: Int = 1000
     var songEndBehavior: SongEndBehavior = SongEndBehavior.DEACTIVATE
+    var loopIntervalMs: Int = 1000
     var messageDisplay: MessageDisplay = MessageDisplay.NONE
 
     // Sound
@@ -107,6 +108,7 @@ class GommemodeConfig {
         val defaults = GommemodeConfig()
         toggleCooldownMs = toggleCooldownMs.coerceIn(MIN_COOLDOWN_MS, MAX_COOLDOWN_MS)
         if (songEndBehavior == null) songEndBehavior = defaults.songEndBehavior
+        loopIntervalMs = loopIntervalMs.coerceIn(MIN_LOOP_INTERVAL_MS, MAX_LOOP_INTERVAL_MS)
         if (messageDisplay == null) messageDisplay = defaults.messageDisplay
 
         volumePercent = volumePercent.coerceIn(MIN_VOLUME_PERCENT, MAX_VOLUME_PERCENT)
@@ -139,6 +141,10 @@ class GommemodeConfig {
     companion object {
         const val MIN_COOLDOWN_MS = 0
         const val MAX_COOLDOWN_MS = 10_000
+
+        // Lower bound keeps a song that cannot play from restarting every tick.
+        const val MIN_LOOP_INTERVAL_MS = 100
+        const val MAX_LOOP_INTERVAL_MS = 60_000
         const val MIN_VOLUME_PERCENT = 0
         const val MAX_VOLUME_PERCENT = 100
         const val MIN_PITCH_PERCENT = 50
