@@ -539,16 +539,12 @@ class GommemodeConfigScreen(
         if (suggestionEntries(placed).any { it.second.contains(mx, my) }) return
 
         if (hasErrors && (applyRect.contains(mx, my) || doneRect.contains(mx, my))) {
-            g.setTooltipForNextFrame(font, Component.translatable("$KEY_PREFIX.invalid"), mouseX, mouseY)
+            val button = if (applyRect.contains(mx, my)) applyRect else doneRect
+            tooltip(g, tipLines(Component.translatable("$KEY_PREFIX.invalid"), Theme.ERROR), button, centered = true)
             return
         }
         if (resetAllRect.contains(mx, my)) {
-            g.setTooltipForNextFrame(
-                font,
-                font.split(Component.translatable("$KEY_PREFIX.resetAll.tooltip"), TOOLTIP_WIDTH),
-                mouseX,
-                mouseY,
-            )
+            tooltip(g, tipLines(Component.translatable("$KEY_PREFIX.resetAll.tooltip"), Theme.TEXT_SOFT), resetAllRect)
             return
         }
 
@@ -556,7 +552,7 @@ class GommemodeConfigScreen(
         if (keyboardMode) {
             val selected = placed.firstOrNull { it.row != null && it.row === selectedRow }
             if (selected != null && selected.rect.bottom > contentRect.y && selected.rect.y < contentRect.bottom) {
-                g.setTooltipForNextFrame(font, tooltipLines(selected), selected.rect.x + LABEL_X - 12, selected.rect.bottom + 4)
+                tooltip(g, tooltipLines(selected), selected.rect, selected.rect.x + LABEL_X, preferBelow = true)
             }
             return
         }
@@ -572,31 +568,90 @@ class GommemodeConfigScreen(
         }
         if (entry == null || row == null) return
 
-        when {
-            !row.isDefault && entry.resetIcon.contains(mx, my) -> {
-                g.setTooltipForNextFrame(font, Component.translatable("$KEY_PREFIX.reset"), mouseX, mouseY)
-            }
-
-            row.isModified && entry.undoIcon.contains(mx, my) -> {
-                g.setTooltipForNextFrame(font, Component.translatable("$KEY_PREFIX.undo"), mouseX, mouseY)
-            }
-
-            hoverInstant || now - hoverStart >= TOOLTIP_DELAY_MS || (row.error() != null && entry.control.contains(mx, my)) -> {
-                g.setTooltipForNextFrame(font, tooltipLines(entry), mouseX, mouseY)
-                lastTooltipAt = now
-            }
+        // The row tooltip stays while the reset or undo icon shows its own one; the two go on opposite sides of the row.
+        var rowTipBelow: Boolean? = null
+        if (hoverInstant || now - hoverStart >= TOOLTIP_DELAY_MS || (row.error() != null && entry.control.contains(mx, my))) {
+            rowTipBelow = tooltip(g, tooltipLines(entry), entry.rect, entry.rect.x + LABEL_X, preferBelow = true)
+            lastTooltipAt = now
         }
+        val (icon, text) =
+            when {
+                !row.isDefault && entry.resetIcon.contains(mx, my) -> entry.resetIcon to Component.translatable("$KEY_PREFIX.reset")
+                row.isModified && entry.undoIcon.contains(mx, my) -> entry.undoIcon to Component.translatable("$KEY_PREFIX.undo")
+                else -> return
+            }
+        tooltip(g, tipLines(text, Theme.ACCENT), icon, centered = true, preferBelow = rowTipBelow == false)
     }
 
-    /** The tooltip of a row: the full label if it is cut, the description, the default value and any error. */
-    private fun tooltipLines(entry: Placed): List<FormattedCharSequence> {
+    /** One tooltip line in [color]; a `null` [text] draws a thin divider. */
+    private class TipLine(
+        val text: FormattedCharSequence?,
+        val color: Int,
+    )
+
+    /** [text] wrapped to the tooltip width, in [color]. */
+    private fun tipLines(
+        text: Component,
+        color: Int,
+    ): List<TipLine> = font.split(text, TOOLTIP_WIDTH).map { TipLine(it, color) }
+
+    /**
+     * Draws a tooltip in the style of the screen's panels next to [anchor], never at the mouse, so it does not cover
+     * the element it explains or the control under the mouse. It goes below or above the anchor as [preferBelow] says,
+     * and to the other side when it does not fit between the top of the screen and the bottom buttons.
+     * Its left edge is [x], or it is centered on the anchor when [centered]; it is kept on screen.
+     *
+     * @return whether the tooltip went below the anchor.
+     */
+    private fun tooltip(
+        g: GuiGraphicsExtractor,
+        lines: List<TipLine>,
+        anchor: Rect,
+        x: Int = anchor.x,
+        centered: Boolean = false,
+        preferBelow: Boolean = false,
+    ): Boolean {
+        val textWidth = lines.maxOf { line -> line.text?.let(font::width) ?: 0 }
+        val w = textWidth + 2 * TIP_PADDING
+        val h = lines.sumOf { if (it.text == null) TIP_DIVIDER else TIP_LINE } - (TIP_LINE - font.lineHeight) + 2 * TIP_PADDING
+        val fitsBelow = anchor.bottom + TIP_GAP + h <= bottomY - GAP
+        val fitsAbove = anchor.y - TIP_GAP - h >= MARGIN
+        val below = if (preferBelow) fitsBelow || !fitsAbove else !fitsAbove && fitsBelow
+        val left = (if (centered) anchor.x + (anchor.width - w) / 2 else x).coerceAtMost(width - MARGIN - w).coerceAtLeast(MARGIN)
+        val top = if (below) anchor.bottom + TIP_GAP else max(MARGIN, anchor.y - TIP_GAP - h)
+
+        // Above everything else, including the id suggestions.
+        g.nextStratum()
+        g.fill(left, top, left + w, top + h, Theme.DROPDOWN)
+        g.outline(left, top, w, h, Theme.TEXT_DIM)
+        var y = top + TIP_PADDING
+        for (line in lines) {
+            val text = line.text
+            if (text == null) {
+                g.fill(left + TIP_PADDING, y + TIP_DIVIDER / 2 - 1, left + w - TIP_PADDING, y + TIP_DIVIDER / 2, Theme.DIVIDER)
+                y += TIP_DIVIDER
+            } else {
+                g.text(font, text, left + TIP_PADDING, y, line.color)
+                y += TIP_LINE
+            }
+        }
+        return below
+    }
+
+    /**
+     * The tooltip of a row: the full label if it is cut, the description, then below a divider the default value
+     * and any error.
+     */
+    private fun tooltipLines(entry: Placed): List<TipLine> {
         val row = entry.row ?: return emptyList()
-        val lines = mutableListOf<FormattedCharSequence>()
-        if (font.width(labelText(row)) > labelSpace(entry, hovered = true)) lines += font.split(row.label, TOOLTIP_WIDTH)
-        lines += font.split(row.description.copy().withColor(Theme.TEXT_DIM), TOOLTIP_WIDTH)
+        val lines = mutableListOf<TipLine>()
+        if (font.width(labelText(row)) > labelSpace(entry, hovered = true)) lines += tipLines(row.label, Theme.TEXT)
+        lines += tipLines(row.description, Theme.TEXT_SOFT)
+        lines += TipLine(null, 0)
         // Showing the default lets players judge a change without resetting it first.
-        lines += font.split(Component.translatable("$KEY_PREFIX.default", row.defaultText()).withColor(Theme.TEXT_DIM), TOOLTIP_WIDTH)
-        row.error()?.let { lines += font.split(it.copy().withColor(Theme.ERROR), TOOLTIP_WIDTH) }
+        val default = row.defaultText().copy().withColor(Theme.ACCENT)
+        lines += tipLines(Component.translatable("$KEY_PREFIX.default", default), Theme.TEXT_DIM)
+        row.error()?.let { lines += tipLines(it, Theme.ERROR) }
         return lines
     }
 
@@ -993,6 +1048,10 @@ class GommemodeConfigScreen(
         const val SCROLLBAR_SPACE = 5
         const val SUGGESTION_HEIGHT = 12
         const val TOOLTIP_WIDTH = 220
+        const val TIP_PADDING = 5
+        const val TIP_LINE = 10
+        const val TIP_DIVIDER = 7
+        const val TIP_GAP = 3
         const val TOOLTIP_DELAY_MS = 500L
         const val TOOLTIP_GRACE_MS = 300L
 
