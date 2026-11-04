@@ -190,6 +190,14 @@ object Config {
                 .setSaveConsumer { config.positionalSound = it }
                 .build(),
         )
+        category.addEntry(
+            entries
+                .startBooleanToggle(label("pauseMusic"), config.pauseMusic)
+                .setDefaultValue(defaults.pauseMusic)
+                .setTooltip(tooltip("pauseMusic"))
+                .setSaveConsumer { config.pauseMusic = it }
+                .build(),
+        )
     }
 
     /** Adds the spawn location, spawn distance and fluid targeting options. */
