@@ -26,7 +26,7 @@
   "config.gommemode.option.soundEnabled": "Play Song",
   "config.gommemode.option.soundEnabled.tooltip": "Play the Gomme hymn when Gommemode is activated.",
   "config.gommemode.option.volumePercent": "Volume",
-  "config.gommemode.option.volumePercent.tooltip": "Song volume. Values above 100 % mainly increase how far the song can be heard.\nApplies the next time the song starts.",
+  "config.gommemode.option.volumePercent.tooltip": "Song volume, on top of the volume of the chosen sound category.\nApplies the next time the song starts.",
   "config.gommemode.option.pitchPercent": "Pitch",
   "config.gommemode.option.pitchPercent.tooltip": "Song pitch and speed. 100 % is the original.\nApplies the next time the song starts.",
   "config.gommemode.option.soundSource": "Sound Category",
