@@ -32,7 +32,7 @@ Gommemode is a fun client-side Fabric mod for Minecraft that brings the legendar
 4. The GommeHD entity will spawn at your crosshair, up to 5 blocks away (configurable), with a firework particle effect
 5. The Gomme hymn will start playing automatically
 6. **Press `G` again** to deactivate and remove the entity
-7. If the song ends while Gommemode is still active, it will automatically toggle off (configurable)
+7. If the song ends while Gommemode is still active, it will automatically toggle off (configurable). With "Play Song" turned off there is no song end, so it stays on until you toggle it off
 
 ### Placement Mechanics
 
