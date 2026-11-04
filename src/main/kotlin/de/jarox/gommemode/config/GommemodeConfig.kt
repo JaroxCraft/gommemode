@@ -96,7 +96,7 @@ class GommemodeConfig {
     var scale: Double = 1.0
     var shadowRadius: Double = 0.5
     var showNameTag: Boolean = false
-    var nameTagText: String = ""
+    var nameTagText: String = "GommeHD"
     var glowing: Boolean = false
 
     @field:JsonAdapter(HexColorAdapter::class)
