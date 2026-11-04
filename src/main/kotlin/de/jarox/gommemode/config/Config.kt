@@ -2,7 +2,7 @@ package de.jarox.gommemode.config
 
 import de.jarox.gommemode.Gommemode
 import de.jarox.gommemode.GommemodeManager
-import de.jarox.gommemode.entity.GommeEntity
+import de.jarox.gommemode.util.RegistryIds
 import me.shedaniel.clothconfig2.api.ConfigBuilder
 import me.shedaniel.clothconfig2.api.ConfigCategory
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder
@@ -12,12 +12,9 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.model.HumanoidModel
 import net.minecraft.core.particles.SimpleParticleType
-import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.Identifier
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.HumanoidArm
-import net.minecraft.world.item.Items
 import java.util.Locale
 import java.util.Optional
 
@@ -262,7 +259,14 @@ object Config {
                 .build(),
         )
         category.addEntry(
-            idDropdown(entries, "particleType", config.particleType, defaults.particleType, particleIds(), ::validateParticle) {
+            idDropdown(
+                entries,
+                "particleType",
+                config.particleType,
+                defaults.particleType,
+                RegistryIds.simpleParticleIds(),
+                ::validateParticle,
+            ) {
                 config.particleType = it
             },
         )
@@ -296,12 +300,12 @@ object Config {
         defaults: GommemodeConfig,
     ) {
         category.addEntry(
-            idDropdown(entries, "mainHandItem", config.mainHandItem, defaults.mainHandItem, itemIds(), ::validateItem) {
+            idDropdown(entries, "mainHandItem", config.mainHandItem, defaults.mainHandItem, RegistryIds.itemIds(), ::validateItem) {
                 config.mainHandItem = it
             },
         )
         category.addEntry(
-            idDropdown(entries, "offHandItem", config.offHandItem, defaults.offHandItem, itemIds(), ::validateItem) {
+            idDropdown(entries, "offHandItem", config.offHandItem, defaults.offHandItem, RegistryIds.itemIds(), ::validateItem) {
                 config.offHandItem = it
             },
         )
@@ -425,22 +429,6 @@ object Config {
         .setSaveConsumer { save(it.trim()) }
         .build()
 
-    /** All item ids except air, sorted, as dropdown suggestions. */
-    private fun itemIds(): List<String> =
-        BuiltInRegistries.ITEM
-            .keySet()
-            .filter { it != BuiltInRegistries.ITEM.getKey(Items.AIR) }
-            .map(Identifier::toString)
-            .sorted()
-
-    /** All particle ids that can be spawned without extra parameters, sorted. */
-    private fun particleIds(): List<String> =
-        BuiltInRegistries.PARTICLE_TYPE
-            .keySet()
-            .filter { BuiltInRegistries.PARTICLE_TYPE.getValue(it) is SimpleParticleType }
-            .map(Identifier::toString)
-            .sorted()
-
     /** Gets or creates the category with the translated name for [name]. */
     private fun ConfigBuilder.category(name: String): ConfigCategory =
         getOrCreateCategory(Component.translatable("$KEY_PREFIX.category.$name"))
@@ -464,22 +452,16 @@ object Config {
     private fun validateItem(id: String): Optional<Component> =
         when {
             id.isBlank() -> Optional.empty()
-            Identifier.tryParse(id.trim()) == BuiltInRegistries.ITEM.getKey(Items.AIR) ->
-                Optional.of(Component.translatable("$KEY_PREFIX.error.airItem"))
-            GommeEntity.findItem(id) != null -> Optional.empty()
+            RegistryIds.isAir(id) -> Optional.of(Component.translatable("$KEY_PREFIX.error.airItem"))
+            RegistryIds.item(id) != null -> Optional.empty()
             else -> Optional.of(Component.translatable("$KEY_PREFIX.error.unknownItem", id.trim()))
         }
 
     /** Accepts only known particle ids that need no extra parameters. */
-    private fun validateParticle(id: String): Optional<Component> {
-        val particle =
-            Identifier
-                .tryParse(id.trim())
-                ?.let { BuiltInRegistries.PARTICLE_TYPE.getOptional(it).orElse(null) }
-        return when (particle) {
+    private fun validateParticle(id: String): Optional<Component> =
+        when (RegistryIds.particleType(id)) {
             null -> Optional.of(Component.translatable("$KEY_PREFIX.error.unknownParticle", id.trim()))
             !is SimpleParticleType -> Optional.of(Component.translatable("$KEY_PREFIX.error.complexParticle", id.trim()))
             else -> Optional.empty()
         }
-    }
 }
