@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.HumanoidArm
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.Attributes
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.Level
@@ -115,14 +116,22 @@ class GommeEntity(
          * Resolves an item id such as `minecraft:diamond_sword` to a stack.
          * Blank or unknown ids yield an empty stack.
          */
-        fun resolveItem(id: String): ItemStack {
-            if (id.isBlank()) return ItemStack.EMPTY
+        fun resolveItem(id: String): ItemStack = findItem(id)?.let(::ItemStack) ?: ItemStack.EMPTY
+
+        /**
+         * Looks up an item id such as `minecraft:diamond_sword` in the item registry.
+         * Blank ids, unknown ids and air yield `null`.
+         *
+         * Unlike [resolveItem], this creates no [ItemStack], so it also works outside a world
+         * (e.g. in the config screen), where item components are not bound yet.
+         */
+        fun findItem(id: String): Item? {
+            if (id.isBlank()) return null
             val item =
                 Identifier
                     .tryParse(id.trim())
                     ?.let { BuiltInRegistries.ITEM.getOptional(it).orElse(null) }
-                    ?: return ItemStack.EMPTY
-            return if (item == Items.AIR) ItemStack.EMPTY else ItemStack(item)
+            return item?.takeIf { it != Items.AIR }
         }
     }
 }
