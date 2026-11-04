@@ -42,11 +42,7 @@ class GommeEntityRenderer(
         )
     }
 
-    /**
-     * Create a new render state holder for this renderer.
-     *
-     * @return A new, default-initialized {@link HumanoidRenderState} instance.
-     */
+    /** A new, empty [HumanoidRenderState] for this renderer to fill. */
     override fun createRenderState(): HumanoidRenderState = HumanoidRenderState()
 
     /**
@@ -115,12 +111,7 @@ class GommeEntityRenderer(
         return if (text.isBlank()) entity.displayName else Component.literal(text)
     }
 
-    /**
-     * Selects the texture to use for rendering the entity.
-     *
-     * @param renderState The current humanoid render state (unused; texture is constant).
-     * @return The Identifier of the texture to use for rendering.
-     */
+    /** The GommeHD skin; the same for every render state. */
     override fun getTextureLocation(renderState: HumanoidRenderState): Identifier = gommeTexture
 
     private companion object {

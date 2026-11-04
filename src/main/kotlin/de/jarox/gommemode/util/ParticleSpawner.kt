@@ -7,6 +7,11 @@ import net.minecraft.world.phys.Vec3
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
+
+// At most this many angle steps per axis, and at most this many particles in total, so tiny step sizes cannot freeze the game.
+private const val MAX_STEPS = 360
+private const val PARTICLE_BUDGET = 10_000
 
 /**
  * Spawns particles in a spherical pattern around the given center point.
@@ -14,8 +19,8 @@ import kotlin.math.sin
  * @param level The client world to spawn particles in
  * @param center The center of the sphere
  * @param radius The radius of the sphere
- * @particleType The type of particle to spawn
- * @stepSize Angular step size in radians; smaller values produce denser particle distributions
+ * @param particleType The type of particle to spawn
+ * @param stepSize Angular step size in radians; smaller values produce denser particle distributions
  */
 fun spawnSphere(
     level: ClientLevel,
@@ -26,18 +31,15 @@ fun spawnSphere(
 ) {
     require(stepSize.isFinite() && stepSize > 0.0) { "stepSize must be finite and > 0, was: $stepSize" }
 
-    val maxSteps = 360
-    val particleBudget = 10000
-
     val phiStepsRaw = (PI / stepSize).toInt().coerceAtLeast(1)
     val thetaStepsRaw = (2 * PI / stepSize).toInt().coerceAtLeast(1)
 
-    var phiSteps = minOf(phiStepsRaw, maxSteps)
-    var thetaSteps = minOf(thetaStepsRaw, maxSteps)
+    var phiSteps = minOf(phiStepsRaw, MAX_STEPS)
+    var thetaSteps = minOf(thetaStepsRaw, MAX_STEPS)
 
     var totalParticles = (phiSteps + 1) * (thetaSteps + 1)
-    if (totalParticles > particleBudget) {
-        val scale = kotlin.math.sqrt(particleBudget.toDouble() / totalParticles)
+    if (totalParticles > PARTICLE_BUDGET) {
+        val scale = sqrt(PARTICLE_BUDGET.toDouble() / totalParticles)
         phiSteps = (phiSteps * scale).toInt().coerceAtLeast(1)
         thetaSteps = (thetaSteps * scale).toInt().coerceAtLeast(1)
         totalParticles = (phiSteps + 1) * (thetaSteps + 1)
