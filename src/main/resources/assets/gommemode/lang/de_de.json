@@ -26,7 +26,7 @@
   "config.gommemode.option.soundEnabled": "Lied abspielen",
   "config.gommemode.option.soundEnabled.tooltip": "Die Gomme-Hymne beim Aktivieren abspielen.",
   "config.gommemode.option.volumePercent": "Lautstärke",
-  "config.gommemode.option.volumePercent.tooltip": "Lautstärke des Lieds. Werte über 100 % erhöhen vor allem die Hörweite.\nGilt ab dem nächsten Start des Lieds.",
+  "config.gommemode.option.volumePercent.tooltip": "Lautstärke des Lieds, zusätzlich zur Lautstärke der gewählten Geräuschkategorie.\nGilt ab dem nächsten Start des Lieds.",
   "config.gommemode.option.pitchPercent": "Tonhöhe",
   "config.gommemode.option.pitchPercent.tooltip": "Tonhöhe und Geschwindigkeit des Lieds. 100 % ist das Original.\nGilt ab dem nächsten Start des Lieds.",
   "config.gommemode.option.soundSource": "Geräuschkategorie",

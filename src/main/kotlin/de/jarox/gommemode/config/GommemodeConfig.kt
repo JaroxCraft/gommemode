@@ -127,7 +127,7 @@ class GommemodeConfig {
         const val MIN_COOLDOWN_MS = 0
         const val MAX_COOLDOWN_MS = 10_000
         const val MIN_VOLUME_PERCENT = 0
-        const val MAX_VOLUME_PERCENT = 200
+        const val MAX_VOLUME_PERCENT = 100
         const val MIN_PITCH_PERCENT = 50
         const val MAX_PITCH_PERCENT = 200
         const val MIN_SPAWN_DISTANCE = 1.0
