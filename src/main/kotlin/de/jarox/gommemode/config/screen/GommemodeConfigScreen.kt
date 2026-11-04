@@ -666,6 +666,9 @@ class GommemodeConfigScreen(
 
         suggestionEntries(placed).firstOrNull { it.second.contains(x, y) }?.let { (id, _) ->
             (suggestionTarget(placed)?.first)?.accept(id)
+            // The clicked id is the choice now; a later Enter must not swap it for the highlighted suggestion.
+            suggestionIndex = 0
+            suggestionNavigated = false
             return true
         }
 
