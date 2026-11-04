@@ -3,6 +3,7 @@ package de.jarox.gommemode
 import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.brigadier.Command
 import de.jarox.gommemode.config.ConfigManager
+import de.jarox.gommemode.config.GommemodeConfig
 import de.jarox.gommemode.config.screen.GommemodeConfigScreen
 import de.jarox.gommemode.entity.GommeEntity
 import de.jarox.gommemode.entity.GommeEntityRenderer
@@ -99,10 +100,19 @@ class Gommemode :
         }
     }
 
-    /** Toggles Gommemode once per queued key press while a world is loaded. */
+    /**
+     * Toggles Gommemode once per queued key press while a world is loaded.
+     * With Ctrl held and [GommemodeConfig.ctrlOpensConfig] on, the key opens the config screen instead (default: Ctrl+G).
+     */
     private fun handleKeyMappingClick(client: Minecraft) {
         val keyMapping = toggleKeyMapping ?: return
         while (keyMapping.consumeClick()) {
+            if (ConfigManager.config.ctrlOpensConfig && client.hasControlDown()) {
+                // Clicks queued along with this one are dropped, so they do not toggle after the screen closes.
+                while (keyMapping.consumeClick()) Unit
+                client.gui.setScreen(GommemodeConfigScreen(null))
+                return
+            }
             val player = client.player ?: return
             val level = client.level ?: return
             GommemodeManager.toggleActive(player, level)

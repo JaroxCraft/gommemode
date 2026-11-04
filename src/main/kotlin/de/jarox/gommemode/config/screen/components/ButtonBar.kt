@@ -58,6 +58,7 @@ internal class ButtonBar(
         when {
             button == Button.RESET_ALL -> Tip(RESET_ALL_TOOLTIP, Theme.TEXT_SOFT)
             button != Button.CANCEL && summary.hasErrors -> Tip(INVALID, Theme.ERROR)
+            button == Button.DONE -> Tip(DONE_TOOLTIP, Theme.TEXT_SOFT)
             else -> null
         }
 
@@ -86,6 +87,7 @@ internal class ButtonBar(
         private val RESET_ALL: Component = Component.translatable("$KEY_PREFIX.resetAll")
         private val RESET_ALL_TOOLTIP: Component = Component.translatable("$KEY_PREFIX.resetAll.tooltip")
         private val APPLY: Component = Component.translatable("$KEY_PREFIX.apply")
+        private val DONE_TOOLTIP: Component = Component.translatable("$KEY_PREFIX.done.tooltip")
         private val INVALID: Component = Component.translatable("$KEY_PREFIX.invalid")
 
         /** The width of the Reset All button, which depends on its translated label. */

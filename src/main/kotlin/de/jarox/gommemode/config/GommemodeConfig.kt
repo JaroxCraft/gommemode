@@ -61,6 +61,7 @@ enum class LookTarget {
 class GommemodeConfig {
     // General
     var enabled: Boolean = true
+    var ctrlOpensConfig: Boolean = true
     var toggleCooldownMs: Int = 1000
     var songEndBehavior: SongEndBehavior = SongEndBehavior.DEACTIVATE
     var loopIntervalMs: Int = 1000

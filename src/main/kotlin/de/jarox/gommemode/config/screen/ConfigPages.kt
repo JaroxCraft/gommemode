@@ -50,6 +50,7 @@ internal fun buildPages(state: EditState): List<Page> {
                     listOfNotNull(
                         rows.toggle(GommemodeConfig::enabled),
                         rows.toggleKey(),
+                        rows.toggle(GommemodeConfig::ctrlOpensConfig),
                         rows.slider(GommemodeConfig::toggleCooldownMs, GommemodeConfig.COOLDOWN_MS, 50, MILLIS),
                         rows.enum(GommemodeConfig::messageDisplay),
                     ),

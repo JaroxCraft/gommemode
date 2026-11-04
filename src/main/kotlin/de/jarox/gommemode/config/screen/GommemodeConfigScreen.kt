@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.cursor.CursorType
 import com.mojang.blaze3d.platform.cursor.CursorTypes
 import de.jarox.gommemode.Gommemode
 import de.jarox.gommemode.GommemodeManager
+import de.jarox.gommemode.config.ConfigManager
 import de.jarox.gommemode.config.screen.components.ButtonBar
 import de.jarox.gommemode.config.screen.components.ButtonBar.Button
 import de.jarox.gommemode.config.screen.components.OptionList
@@ -354,6 +355,23 @@ class GommemodeConfigScreen(
             return true
         }
 
+        // Ctrl+S saves and closes, like "Done"; with invalid values it does nothing, like the disabled button.
+        if (event.hasControlDown() && event.key() == InputConstants.KEY_S) {
+            if (buttons.isActive(Button.DONE)) press(Button.DONE)
+            return true
+        }
+
+        // Ctrl + the toggle key closes the screen like Escape, as it opened it (see Gommemode.handleKeyMappingClick).
+        if (event.hasControlDown() &&
+            ConfigManager.config.ctrlOpensConfig &&
+            Gommemode.toggleKeyMapping?.matches(event) == true
+        ) {
+            // The key's character must not reach the search or a text field if the discard dialog keeps the screen open.
+            suppressNextChar = true
+            onClose()
+            return true
+        }
+
         focusedBox?.let { box ->
             fieldKeyPressed(box, event)
             return true
@@ -385,7 +403,21 @@ class GommemodeConfigScreen(
             }
 
             InputConstants.KEY_TAB -> {
-                open?.let(suggestions::acceptHighlighted)
+                when {
+                    open != null -> {
+                        suggestions.acceptHighlighted(open)
+                    }
+
+                    // From the search field, Tab leaves it: into the results while searching, otherwise to the next page.
+                    box === searchBox -> {
+                        focus(null)
+                        if (list.query.isEmpty()) {
+                            navigationKeyPressed(event)
+                        } else {
+                            list.visibleRows().firstOrNull()?.let(::select)
+                        }
+                    }
+                }
             }
 
             InputConstants.KEY_DOWN -> {
