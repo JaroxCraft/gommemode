@@ -66,6 +66,9 @@ class GommemodeConfigScreen(
     /** The highlighted entry of the id suggestion list. */
     private var suggestionIndex = 0
 
+    /** Whether the player moved the suggestion highlight with Up/Down since the last edit. */
+    private var suggestionNavigated = false
+
     /** Set when a key press was consumed; the character event that follows it is then ignored. */
     private var suppressNextChar = false
 
@@ -770,7 +773,9 @@ class GommemodeConfigScreen(
 
                 InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
                     if (row != null &&
-                        suggestions.isNotEmpty()
+                        suggestions.isNotEmpty() &&
+                        // A valid typed id stays; a suggestion only replaces it when picked or when the id is invalid.
+                        (row.error() != null || suggestionNavigated)
                     ) {
                         row.accept(suggestions[suggestionIndex.coerceIn(suggestions.indices)].first)
                     }
@@ -787,7 +792,10 @@ class GommemodeConfigScreen(
 
                 InputConstants.KEY_DOWN -> {
                     when {
-                        suggestions.isNotEmpty() -> suggestionIndex = (suggestionIndex + 1) % suggestions.size
+                        suggestions.isNotEmpty() -> {
+                            suggestionIndex = (suggestionIndex + 1) % suggestions.size
+                            suggestionNavigated = true
+                        }
                         // From the search field, Down moves into the option list.
                         box === searchBox -> {
                             focus(null)
@@ -797,12 +805,16 @@ class GommemodeConfigScreen(
                 }
 
                 InputConstants.KEY_UP -> {
-                    if (suggestions.isNotEmpty()) suggestionIndex = (suggestionIndex - 1 + suggestions.size) % suggestions.size
+                    if (suggestions.isNotEmpty()) {
+                        suggestionIndex = (suggestionIndex - 1 + suggestions.size) % suggestions.size
+                        suggestionNavigated = true
+                    }
                 }
 
                 else -> {
                     box.keyPressed(event)
                     suggestionIndex = 0
+                    suggestionNavigated = false
                 }
             }
             return true
@@ -896,6 +908,7 @@ class GommemodeConfigScreen(
         val box = focusedBox
         if (box != null) {
             suggestionIndex = 0
+            suggestionNavigated = false
             return box.charTyped(event)
         }
         // Typing without a focused field starts a search.
@@ -916,6 +929,7 @@ class GommemodeConfigScreen(
         focusedBox = box
         box?.isFocused = true
         suggestionIndex = 0
+        suggestionNavigated = false
     }
 
     /** Asks before resetting every option, including the toggle key, to its default; the dialog names how many change. */
