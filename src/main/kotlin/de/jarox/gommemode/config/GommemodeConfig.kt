@@ -89,6 +89,7 @@ class GommemodeConfig {
     var offHandItem: String = ""
     var mainArm: HumanoidArm = HumanoidArm.RIGHT
     var mainArmPose: HumanoidModel.ArmPose = HumanoidModel.ArmPose.ITEM
+    var offArmPose: HumanoidModel.ArmPose = HumanoidModel.ArmPose.ITEM
     var lookAtPlayer: Boolean = true
     var lookTarget: LookTarget = LookTarget.EYES
     var scale: Double = 1.0
@@ -123,6 +124,7 @@ class GommemodeConfig {
         if (offHandItem == null) offHandItem = defaults.offHandItem
         if (mainArm == null) mainArm = defaults.mainArm
         if (mainArmPose == null) mainArmPose = defaults.mainArmPose
+        if (offArmPose == null) offArmPose = defaults.offArmPose
         if (lookTarget == null) lookTarget = defaults.lookTarget
         scale = scale.finiteOr(defaults.scale).coerceIn(MIN_SCALE, MAX_SCALE)
         shadowRadius = shadowRadius.finiteOr(defaults.shadowRadius).coerceIn(MIN_SHADOW_RADIUS, MAX_SHADOW_RADIUS)

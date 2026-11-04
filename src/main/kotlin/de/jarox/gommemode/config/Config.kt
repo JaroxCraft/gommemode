@@ -315,6 +315,15 @@ object Config {
         )
         category.addEntry(
             entries
+                .startEnumSelector(label("offArmPose"), HumanoidModel.ArmPose::class.java, config.offArmPose)
+                .setDefaultValue(defaults.offArmPose)
+                .setEnumNameProvider { Component.translatable("$KEY_PREFIX.enum.armpose.${it.name.lowercase(Locale.ROOT)}") }
+                .setTooltip(tooltip("offArmPose"))
+                .setSaveConsumer { config.offArmPose = it }
+                .build(),
+        )
+        category.addEntry(
+            entries
                 .startBooleanToggle(label("lookAtPlayer"), config.lookAtPlayer)
                 .setDefaultValue(defaults.lookAtPlayer)
                 .setTooltip(tooltip("lookAtPlayer"))

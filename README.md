@@ -46,7 +46,7 @@ With [ModMenu](https://modrinth.com/mod/modmenu) and [Cloth Config API](https://
 - **Sound**: play song, volume, pitch, sound category, positional or global sound, stop the game music
 - **Spawning**: spawn at crosshair or at the player, spawn distance, whether the crosshair stops at fluids
 - **Particles**: on/off, particle type, sphere radius, particle spacing
-- **Entity**: main and off hand items, main arm, arm pose, look at player (feet or eyes), scale, shadow size, name tag and its text, glowing outline and its color
+- **Entity**: main and off hand items, main arm, main and off arm pose, look at player (feet or eyes), scale, shadow size, name tag and its text, glowing outline and its color
 
 ## Dependencies
 
