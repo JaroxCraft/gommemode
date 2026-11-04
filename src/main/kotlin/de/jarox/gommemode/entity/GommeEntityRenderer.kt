@@ -75,16 +75,19 @@ class GommeEntityRenderer(
         }
     }
 
+    /** The configured shadow radius, scaled with the entity. */
     override fun getShadowRadius(renderState: HumanoidRenderState): Float {
         val radius = ConfigManager.config.shadowRadius.toFloat()
         return radius * renderState.scale
     }
 
+    /** Whether the name tag is enabled in the config, regardless of distance. */
     override fun shouldShowName(
         entity: GommeEntity,
         distanceToCameraSq: Double,
     ): Boolean = ConfigManager.config.showNameTag
 
+    /** The configured name tag text, or the entity name if the text is blank. */
     override fun getNameTag(entity: GommeEntity): Component {
         val text = ConfigManager.config.nameTagText
         return if (text.isBlank()) entity.displayName else Component.literal(text)

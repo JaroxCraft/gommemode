@@ -153,6 +153,7 @@ object GommemodeManager {
         }
     }
 
+    /** Turns Gommemode on: plays the song, spawns the entity and shows the feedback message. */
     private fun activate(
         player: LocalPlayer,
         level: ClientLevel,
@@ -165,6 +166,7 @@ object GommemodeManager {
         sendFeedback(player, "gommemode.started")
     }
 
+    /** Turns Gommemode off: stops the song, removes the entity and shows the feedback message. */
     private fun deactivate(player: LocalPlayer) {
         if (!isActive) return
         Gommemode.LOGGER.info("Deactivating Gommemode")
@@ -173,6 +175,7 @@ object GommemodeManager {
         sendFeedback(player, "gommemode.stopped")
     }
 
+    /** Shows the toggle message where the config says (nowhere, action bar or chat). */
     private fun sendFeedback(
         player: LocalPlayer,
         stateKey: String,
@@ -185,6 +188,7 @@ object GommemodeManager {
         }
     }
 
+    /** Picks the spawn location, then starts the song, spawns the particles and adds the entity. */
     private fun startSongAndSpawnEntity(
         player: LocalPlayer,
         level: ClientLevel,
@@ -220,6 +224,7 @@ object GommemodeManager {
         Gommemode.LOGGER.debug("Entity spawned with ID {}", newEntity.id)
     }
 
+    /** Starts the song at [location] with the current sound settings, unless sound is disabled. */
     private fun playSong(location: Vec3) {
         val config = ConfigManager.config
         if (!config.soundEnabled) {
@@ -253,6 +258,7 @@ object GommemodeManager {
         minecraft.soundManager.play(sound)
     }
 
+    /** Stops the song and removes the entity from the world. */
     private fun stopSongAndRemoveEntity() {
         Gommemode.LOGGER.debug("Stopping song and removing entity")
         stopSong()
@@ -290,6 +296,7 @@ private data class SoundSettings(
     val positional: Boolean,
 ) {
     companion object {
+        /** Captures the sound settings of [config]. */
         fun of(config: GommemodeConfig) =
             SoundSettings(config.soundSource, config.volumePercent, config.pitchPercent, config.positionalSound)
     }

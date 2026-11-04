@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory
 class Gommemode :
     ModInitializer,
     ClientModInitializer {
+    /** Registers the entity type, its attributes and the song sound event. */
     override fun onInitialize() {
         LOGGER.info("Registering entity type and sound event")
         Registry.register(
@@ -51,6 +52,7 @@ class Gommemode :
         LOGGER.info("Entity and sound registrations complete")
     }
 
+    /** Loads the config and sets up the renderer, key mapping and client events. */
     override fun onInitializeClient() {
         LOGGER.info("Initializing client-side config, renderer, key mapping, and events")
         ConfigManager.load()
@@ -61,12 +63,14 @@ class Gommemode :
         LOGGER.info("Gommemode initialized!")
     }
 
+    /** Registers [GommeEntityRenderer] for the Gomme entity type. */
     private fun registerEntityRenderer() {
         EntityRenderers.register(GOMME_ENTITY_TYPE) { context: EntityRendererProvider.Context ->
             GommeEntityRenderer(context)
         }
     }
 
+    /** Registers the toggle key mapping (default: `G`) in its own category. */
     private fun registerKeyMapping() {
         val categoryIdentifier = Identifier.fromNamespaceAndPath(MOD_ID, "general")
         val category = KeyMapping.Category.register(categoryIdentifier)
@@ -82,6 +86,7 @@ class Gommemode :
             )
     }
 
+    /** Runs the manager tick and handles key presses at the end of every client tick. */
     private fun registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register { client: Minecraft ->
             client.player?.let(GommemodeManager::tick)
@@ -89,6 +94,7 @@ class Gommemode :
         }
     }
 
+    /** Toggles Gommemode once per queued key press while a world is loaded. */
     private fun handleKeyMappingClick(client: Minecraft) {
         val keyMapping = toggleKeyMapping ?: return
         while (keyMapping.consumeClick()) {
@@ -98,6 +104,7 @@ class Gommemode :
         }
     }
 
+    /** Resets the Gommemode state whenever a world is joined or left. */
     private fun registerConnectionEvents() {
         ClientPlayConnectionEvents.DISCONNECT.register { _, _ ->
             GommemodeManager.reset()
