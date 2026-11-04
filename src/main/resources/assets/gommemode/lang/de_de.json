@@ -93,6 +93,7 @@
   "config.gommemode.enum.armpose.brush": "Pinsel",
   "config.gommemode.enum.armpose.spear": "Speer",
   "config.gommemode.error.unknownItem": "Unbekanntes Item: %s",
+  "config.gommemode.error.airItem": "Feld leer lassen, damit nichts gehalten wird",
   "config.gommemode.error.unknownParticle": "Unbekannter Partikel: %s",
   "config.gommemode.error.complexParticle": "Partikel braucht zusätzliche Parameter und wird nicht unterstützt: %s"
 }
