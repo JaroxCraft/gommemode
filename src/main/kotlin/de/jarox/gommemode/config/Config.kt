@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.resources.Identifier
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.HumanoidArm
+import net.minecraft.world.item.Items
 import java.util.Locale
 import java.util.Optional
 
@@ -237,13 +238,9 @@ object Config {
                 .build(),
         )
         category.addEntry(
-            entries
-                .startStrField(label("particleType"), config.particleType)
-                .setDefaultValue(defaults.particleType)
-                .setTooltip(tooltip("particleType"))
-                .setErrorSupplier(::validateParticle)
-                .setSaveConsumer { config.particleType = it.trim() }
-                .build(),
+            idDropdown(entries, "particleType", config.particleType, defaults.particleType, particleIds(), ::validateParticle) {
+                config.particleType = it
+            },
         )
         category.addEntry(
             entries
@@ -274,22 +271,14 @@ object Config {
         defaults: GommemodeConfig,
     ) {
         category.addEntry(
-            entries
-                .startStrField(label("mainHandItem"), config.mainHandItem)
-                .setDefaultValue(defaults.mainHandItem)
-                .setTooltip(tooltip("mainHandItem"))
-                .setErrorSupplier(::validateItem)
-                .setSaveConsumer { config.mainHandItem = it.trim() }
-                .build(),
+            idDropdown(entries, "mainHandItem", config.mainHandItem, defaults.mainHandItem, itemIds(), ::validateItem) {
+                config.mainHandItem = it
+            },
         )
         category.addEntry(
-            entries
-                .startStrField(label("offHandItem"), config.offHandItem)
-                .setDefaultValue(defaults.offHandItem)
-                .setTooltip(tooltip("offHandItem"))
-                .setErrorSupplier(::validateItem)
-                .setSaveConsumer { config.offHandItem = it.trim() }
-                .build(),
+            idDropdown(entries, "offHandItem", config.offHandItem, defaults.offHandItem, itemIds(), ::validateItem) {
+                config.offHandItem = it
+            },
         )
         category.addEntry(
             entries
@@ -380,6 +369,44 @@ object Config {
         )
     }
 
+    /**
+     * Builds a text field with a dropdown of suggested registry ids. Any text can still be typed;
+     * [validate] decides whether it is accepted. The saved value is trimmed.
+     */
+    private fun idDropdown(
+        entries: ConfigEntryBuilder,
+        option: String,
+        value: String,
+        default: String,
+        suggestions: List<String>,
+        validate: (String) -> Optional<Component>,
+        save: (String) -> Unit,
+    ) = entries
+        .startStringDropdownMenu(label(option), value)
+        .setSelections(suggestions)
+        .setSuggestionMode(true)
+        .setDefaultValue(default)
+        .setTooltip(tooltip(option))
+        .setErrorSupplier(validate)
+        .setSaveConsumer { save(it.trim()) }
+        .build()
+
+    /** All item ids except air, sorted, as dropdown suggestions. */
+    private fun itemIds(): List<String> =
+        BuiltInRegistries.ITEM
+            .keySet()
+            .filter { it != BuiltInRegistries.ITEM.getKey(Items.AIR) }
+            .map(Identifier::toString)
+            .sorted()
+
+    /** All particle ids that can be spawned without extra parameters, sorted. */
+    private fun particleIds(): List<String> =
+        BuiltInRegistries.PARTICLE_TYPE
+            .keySet()
+            .filter { BuiltInRegistries.PARTICLE_TYPE.getValue(it) is SimpleParticleType }
+            .map(Identifier::toString)
+            .sorted()
+
     private fun ConfigBuilder.category(name: String): ConfigCategory =
         getOrCreateCategory(Component.translatable("$KEY_PREFIX.category.$name"))
 
@@ -397,6 +424,8 @@ object Config {
     private fun validateItem(id: String): Optional<Component> =
         when {
             id.isBlank() -> Optional.empty()
+            Identifier.tryParse(id.trim()) == BuiltInRegistries.ITEM.getKey(Items.AIR) ->
+                Optional.of(Component.translatable("$KEY_PREFIX.error.airItem"))
             !GommeEntity.resolveItem(id).isEmpty -> Optional.empty()
             else -> Optional.of(Component.translatable("$KEY_PREFIX.error.unknownItem", id.trim()))
         }
