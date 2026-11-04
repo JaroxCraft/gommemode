@@ -71,7 +71,7 @@ class GommemodeConfig {
     var pitchPercent: Int = 100
     var soundSource: SoundSource = SoundSource.MASTER
     var positionalSound: Boolean = true
-    var pauseMusic: Boolean = true
+    var stopMusic: Boolean = true
 
     // Spawning
     var spawnLocation: SpawnLocation = SpawnLocation.CROSSHAIR

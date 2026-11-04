@@ -75,7 +75,7 @@ object GommemodeManager {
      * handles the configured song-end behavior.
      */
     fun tick(player: LocalPlayer) {
-        if (ConfigManager.config.pauseMusic && isPlaying()) {
+        if (ConfigManager.config.stopMusic && isPlaying()) {
             // Stops the current track and pushes the next one back, so no track starts during the song.
             // The music returns on its own after the usual delay once the song is over.
             minecraft.musicManager.stopPlaying()
