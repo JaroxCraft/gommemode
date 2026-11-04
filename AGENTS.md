@@ -5,7 +5,8 @@ Compact guidance for AI agents working in this repository.
 ## Project
 
 Gommemode is a client-side Fabric mod written in Kotlin. It spawns a GommeHD entity that looks at the player and plays
-the Gomme hymn, activated via keybind (default: `G`) or automatically when the song stops.
+the Gomme hymn, toggled via keybind (default: `G`). By default it turns itself off when the song ends; it can also loop
+the song or keep the entity (see config).
 
 ## Build, Lint & Run
 
@@ -62,7 +63,15 @@ Configuration in `renovate.json`:
 - Entrypoint class: `de.jarox.gommemode.Gommemode` registered in `src/main/resources/fabric.mod.json` under both
   `client` and `main`.
 - ModMenu config entrypoint: `de.jarox.gommemode.modmenu.ModMenuApiImpl`.
-- Uses Cloth Config API + ModMenu for in-game configuration.
+- Configuration:
+    - `config/GommemodeConfig.kt`: all options with defaults and ranges (`GommemodeConfig`), plus `ConfigManager`,
+      which loads/saves `config/gommemode.json` with Gson. This works without Cloth Config.
+    - `config/Config.kt`: the Cloth Config screen. Cloth Config is optional at runtime; `ModMenuApiImpl` only offers
+      the screen when it is installed, so nothing outside `Config.kt` may reference Cloth classes.
+    - Code reads options from `ConfigManager.config` at the time it needs them. After the screen is saved,
+      `GommemodeManager.onConfigChanged()` applies changes to a running Gommemode.
+    - A new option needs: a field in `GommemodeConfig` (clamped in `sanitize()` if it has a range), an entry in
+      `Config.kt`, and label + tooltip keys in both `en_us.json` and `de_de.json`.
 - Main source lives under `src/main/kotlin/de/jarox/gommemode/`.
 
 ## Agent Behavior
