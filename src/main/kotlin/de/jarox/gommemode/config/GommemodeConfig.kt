@@ -106,21 +106,21 @@ class GommemodeConfig {
     @Suppress("SENSELESS_COMPARISON") // Gson can bypass Kotlin null-safety for missing/invalid enum values
     fun sanitize(): GommemodeConfig {
         val defaults = GommemodeConfig()
-        toggleCooldownMs = toggleCooldownMs.coerceIn(MIN_COOLDOWN_MS, MAX_COOLDOWN_MS)
+        toggleCooldownMs = toggleCooldownMs.coerceIn(COOLDOWN_MS)
         if (songEndBehavior == null) songEndBehavior = defaults.songEndBehavior
-        loopIntervalMs = loopIntervalMs.coerceIn(MIN_LOOP_INTERVAL_MS, MAX_LOOP_INTERVAL_MS)
+        loopIntervalMs = loopIntervalMs.coerceIn(LOOP_INTERVAL_MS)
         if (messageDisplay == null) messageDisplay = defaults.messageDisplay
 
-        volumePercent = volumePercent.coerceIn(MIN_VOLUME_PERCENT, MAX_VOLUME_PERCENT)
-        pitchPercent = pitchPercent.coerceIn(MIN_PITCH_PERCENT, MAX_PITCH_PERCENT)
+        volumePercent = volumePercent.coerceIn(VOLUME_PERCENT)
+        pitchPercent = pitchPercent.coerceIn(PITCH_PERCENT)
         if (soundSource == null) soundSource = defaults.soundSource
 
         if (spawnLocation == null) spawnLocation = defaults.spawnLocation
-        spawnDistance = spawnDistance.finiteOr(defaults.spawnDistance).coerceIn(MIN_SPAWN_DISTANCE, MAX_SPAWN_DISTANCE)
+        spawnDistance = spawnDistance.finiteOr(defaults.spawnDistance).coerceIn(SPAWN_DISTANCE)
 
         if (particleType == null) particleType = defaults.particleType
-        particleRadius = particleRadius.finiteOr(defaults.particleRadius).coerceIn(MIN_PARTICLE_RADIUS, MAX_PARTICLE_RADIUS)
-        particleStepSize = particleStepSize.finiteOr(defaults.particleStepSize).coerceIn(MIN_PARTICLE_STEP, MAX_PARTICLE_STEP)
+        particleRadius = particleRadius.finiteOr(defaults.particleRadius).coerceIn(PARTICLE_RADIUS)
+        particleStepSize = particleStepSize.finiteOr(defaults.particleStepSize).coerceIn(PARTICLE_STEP)
 
         if (mainHandItem == null) mainHandItem = defaults.mainHandItem
         if (offHandItem == null) offHandItem = defaults.offHandItem
@@ -128,8 +128,8 @@ class GommemodeConfig {
         if (mainArmPose == null) mainArmPose = defaults.mainArmPose
         if (offArmPose == null) offArmPose = defaults.offArmPose
         if (lookTarget == null) lookTarget = defaults.lookTarget
-        scale = scale.finiteOr(defaults.scale).coerceIn(MIN_SCALE, MAX_SCALE)
-        shadowRadius = shadowRadius.finiteOr(defaults.shadowRadius).coerceIn(MIN_SHADOW_RADIUS, MAX_SHADOW_RADIUS)
+        scale = scale.finiteOr(defaults.scale).coerceIn(SCALE)
+        shadowRadius = shadowRadius.finiteOr(defaults.shadowRadius).coerceIn(SHADOW_RADIUS)
         if (nameTagText == null) nameTagText = defaults.nameTagText
         glowColor = glowColor and 0xFFFFFF
         return this
@@ -139,28 +139,20 @@ class GommemodeConfig {
     private fun Double.finiteOr(fallback: Double): Double = if (isFinite()) this else fallback
 
     companion object {
-        const val MIN_COOLDOWN_MS = 0
-        const val MAX_COOLDOWN_MS = 10_000
+        // The allowed range of each number option; sanitize() clamps to it and the config screen uses it for its sliders.
+        val COOLDOWN_MS = 0..10_000
 
-        // Lower bound keeps a song that cannot play from restarting every tick.
-        const val MIN_LOOP_INTERVAL_MS = 100
-        const val MAX_LOOP_INTERVAL_MS = 60_000
-        const val MIN_VOLUME_PERCENT = 0
-        const val MAX_VOLUME_PERCENT = 100
-        const val MIN_PITCH_PERCENT = 50
-        const val MAX_PITCH_PERCENT = 200
-        const val MIN_SPAWN_DISTANCE = 1.0
-        const val MAX_SPAWN_DISTANCE = 64.0
-        const val MIN_PARTICLE_RADIUS = 0.1
-        const val MAX_PARTICLE_RADIUS = 16.0
-        const val MIN_PARTICLE_STEP = 0.05
-        const val MAX_PARTICLE_STEP = 1.0
+        // The lower bound keeps a song that cannot play from restarting every tick.
+        val LOOP_INTERVAL_MS = 100..60_000
+        val VOLUME_PERCENT = 0..100
+        val PITCH_PERCENT = 50..200
+        val SPAWN_DISTANCE = 1.0..64.0
+        val PARTICLE_RADIUS = 0.1..16.0
+        val PARTICLE_STEP = 0.05..1.0
 
         // Bounds of the vanilla `minecraft:scale` attribute.
-        const val MIN_SCALE = 0.0625
-        const val MAX_SCALE = 16.0
-        const val MIN_SHADOW_RADIUS = 0.0
-        const val MAX_SHADOW_RADIUS = 4.0
+        val SCALE = 0.0625..16.0
+        val SHADOW_RADIUS = 0.0..4.0
     }
 }
 

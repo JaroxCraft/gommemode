@@ -42,14 +42,8 @@ internal fun buildPages(state: EditState): List<Page> {
                     "toggle",
                     listOfNotNull(
                         rows.toggle(GommemodeConfig::enabled),
-                        state.keyMapping?.let { KeyRow(state, it) },
-                        rows.intSlider(
-                            GommemodeConfig::toggleCooldownMs,
-                            GommemodeConfig.MIN_COOLDOWN_MS,
-                            GommemodeConfig.MAX_COOLDOWN_MS,
-                            50,
-                            MILLIS,
-                        ),
+                        rows.toggleKey(),
+                        rows.slider(GommemodeConfig::toggleCooldownMs, GommemodeConfig.COOLDOWN_MS, 50, MILLIS),
                         rows.enum(GommemodeConfig::messageDisplay),
                     ),
                 ),
@@ -57,13 +51,7 @@ internal fun buildPages(state: EditState): List<Page> {
                     "songEnd",
                     listOf(
                         rows.enum(GommemodeConfig::songEndBehavior),
-                        rows.intSlider(
-                            GommemodeConfig::loopIntervalMs,
-                            GommemodeConfig.MIN_LOOP_INTERVAL_MS,
-                            GommemodeConfig.MAX_LOOP_INTERVAL_MS,
-                            100,
-                            MILLIS,
-                        ),
+                        rows.slider(GommemodeConfig::loopIntervalMs, GommemodeConfig.LOOP_INTERVAL_MS, 100, MILLIS),
                     ),
                 ),
             ),
@@ -75,20 +63,8 @@ internal fun buildPages(state: EditState): List<Page> {
                     "song",
                     listOf(
                         rows.toggle(GommemodeConfig::soundEnabled),
-                        rows.intSlider(
-                            GommemodeConfig::volumePercent,
-                            GommemodeConfig.MIN_VOLUME_PERCENT,
-                            GommemodeConfig.MAX_VOLUME_PERCENT,
-                            1,
-                            PERCENT,
-                        ),
-                        rows.intSlider(
-                            GommemodeConfig::pitchPercent,
-                            GommemodeConfig.MIN_PITCH_PERCENT,
-                            GommemodeConfig.MAX_PITCH_PERCENT,
-                            1,
-                            PERCENT,
-                        ),
+                        rows.slider(GommemodeConfig::volumePercent, GommemodeConfig.VOLUME_PERCENT, 1, PERCENT),
+                        rows.slider(GommemodeConfig::pitchPercent, GommemodeConfig.PITCH_PERCENT, 1, PERCENT),
                         rows.enum(GommemodeConfig::soundSource) { Component.translatable("soundCategory." + it.getName()) },
                         rows.toggle(GommemodeConfig::positionalSound),
                     ),
@@ -103,13 +79,7 @@ internal fun buildPages(state: EditState): List<Page> {
                     "position",
                     listOf(
                         rows.enum(GommemodeConfig::spawnLocation),
-                        rows.doubleSlider(
-                            GommemodeConfig::spawnDistance,
-                            GommemodeConfig.MIN_SPAWN_DISTANCE,
-                            GommemodeConfig.MAX_SPAWN_DISTANCE,
-                            0.5,
-                            BLOCKS,
-                        ),
+                        rows.slider(GommemodeConfig::spawnDistance, GommemodeConfig.SPAWN_DISTANCE, 0.5, BLOCKS),
                         rows.toggle(GommemodeConfig::spawnHitsFluids),
                     ),
                 ),
@@ -122,28 +92,9 @@ internal fun buildPages(state: EditState): List<Page> {
                     "sphere",
                     listOf(
                         rows.toggle(GommemodeConfig::particlesEnabled),
-                        TextRow(
-                            GommemodeConfig::particleType,
-                            state,
-                            ID_FIELD_WIDTH,
-                            ::validateParticle,
-                            RegistryIds.simpleParticleIds(),
-                            trim = true,
-                        ),
-                        rows.doubleSlider(
-                            GommemodeConfig::particleRadius,
-                            GommemodeConfig.MIN_PARTICLE_RADIUS,
-                            GommemodeConfig.MAX_PARTICLE_RADIUS,
-                            0.1,
-                            BLOCKS,
-                        ),
-                        rows.doubleSlider(
-                            GommemodeConfig::particleStepSize,
-                            GommemodeConfig.MIN_PARTICLE_STEP,
-                            GommemodeConfig.MAX_PARTICLE_STEP,
-                            0.05,
-                            null,
-                        ),
+                        rows.idField(GommemodeConfig::particleType, ::validateParticle, RegistryIds.simpleParticleIds()),
+                        rows.slider(GommemodeConfig::particleRadius, GommemodeConfig.PARTICLE_RADIUS, 0.1, BLOCKS),
+                        rows.slider(GommemodeConfig::particleStepSize, GommemodeConfig.PARTICLE_STEP, 0.05, null),
                     ),
                 ),
             ),
@@ -154,11 +105,11 @@ internal fun buildPages(state: EditState): List<Page> {
                 Group(
                     "items",
                     listOf(
-                        TextRow(GommemodeConfig::mainHandItem, state, ID_FIELD_WIDTH, ::validateItem, itemIds, trim = true, hint = NOTHING),
-                        TextRow(GommemodeConfig::offHandItem, state, ID_FIELD_WIDTH, ::validateItem, itemIds, trim = true, hint = NOTHING),
+                        rows.idField(GommemodeConfig::mainHandItem, ::validateItem, itemIds, NOTHING),
+                        rows.idField(GommemodeConfig::offHandItem, ::validateItem, itemIds, NOTHING),
                         rows.enum(GommemodeConfig::mainArm, HumanoidArm::caption),
-                        rows.enum(GommemodeConfig::mainArmPose, ::armPoseName),
-                        rows.enum(GommemodeConfig::offArmPose, ::armPoseName),
+                        rows.enum(GommemodeConfig::mainArmPose),
+                        rows.enum(GommemodeConfig::offArmPose),
                     ),
                 ),
                 Group(
@@ -171,23 +122,17 @@ internal fun buildPages(state: EditState): List<Page> {
                 Group(
                     "appearance",
                     listOf(
-                        rows.doubleSlider(GommemodeConfig::scale, GommemodeConfig.MIN_SCALE, GommemodeConfig.MAX_SCALE, 0.0625, TIMES),
-                        rows.doubleSlider(
-                            GommemodeConfig::shadowRadius,
-                            GommemodeConfig.MIN_SHADOW_RADIUS,
-                            GommemodeConfig.MAX_SHADOW_RADIUS,
-                            0.1,
-                            BLOCKS,
-                        ),
+                        rows.slider(GommemodeConfig::scale, GommemodeConfig.SCALE, 0.0625, TIMES),
+                        rows.slider(GommemodeConfig::shadowRadius, GommemodeConfig.SHADOW_RADIUS, 0.1, BLOCKS),
                         rows.toggle(GommemodeConfig::glowing),
-                        ColorRow(GommemodeConfig::glowColor, state),
+                        rows.color(GommemodeConfig::glowColor),
                     ),
                 ),
                 Group(
                     "nameTag",
                     listOf(
                         rows.toggle(GommemodeConfig::showNameTag),
-                        TextRow(GommemodeConfig::nameTagText, state, 140, hint = Component.translatable("entity.gommemode.gomme")),
+                        rows.text(GommemodeConfig::nameTagText, 140, Component.translatable("entity.gommemode.gomme")),
                     ),
                 ),
             ),
@@ -195,34 +140,53 @@ internal fun buildPages(state: EditState): List<Page> {
     )
 }
 
-private const val ID_FIELD_WIDTH = 160
-
-/** Short constructors for the common row types. */
+/** Short constructors for the row types, all editing the same state. */
 private class RowFactory(
     private val state: EditState,
 ) {
     fun toggle(property: KMutableProperty1<GommemodeConfig, Boolean>) = ToggleRow(property, state)
+
+    /** The toggle key row, if the key mapping is registered. */
+    fun toggleKey() = state.keyMapping?.let { KeyRow(state, it) }
 
     fun <E : Enum<E>> enum(
         property: KMutableProperty1<GommemodeConfig, E>,
         names: (E) -> Component = ::enumName,
     ) = EnumRow(property, state, names)
 
-    fun intSlider(
+    fun slider(
         property: KMutableProperty1<GommemodeConfig, Int>,
-        min: Int,
-        max: Int,
+        range: IntRange,
         step: Int,
         unit: Component?,
-    ) = SliderRow(property, state, min.toDouble(), max.toDouble(), step.toDouble(), { it.roundToInt() }, unit)
+    ) = SliderRow(property, state, range.first.toDouble(), range.last.toDouble(), step.toDouble(), { it.roundToInt() }, unit)
 
-    fun doubleSlider(
+    fun slider(
         property: KMutableProperty1<GommemodeConfig, Double>,
-        min: Double,
-        max: Double,
+        range: ClosedFloatingPointRange<Double>,
         step: Double,
         unit: Component?,
-    ) = SliderRow(property, state, min, max, step, { it }, unit)
+    ) = SliderRow(property, state, range.start, range.endInclusive, step, { it }, unit)
+
+    fun text(
+        property: KMutableProperty1<GommemodeConfig, String>,
+        width: Int,
+        hint: Component,
+    ) = TextRow(property, state, width, hint = hint)
+
+    /** A registry id field: trimmed, checked with [validate] and suggesting [ids] while typing. */
+    fun idField(
+        property: KMutableProperty1<GommemodeConfig, String>,
+        validate: (String) -> Component?,
+        ids: List<String>,
+        hint: Component? = null,
+    ) = TextRow(property, state, ID_FIELD_WIDTH, validate, ids, trim = true, hint = hint)
+
+    fun color(property: KMutableProperty1<GommemodeConfig, Int>) = ColorRow(property, state)
+
+    private companion object {
+        const val ID_FIELD_WIDTH = 160
+    }
 }
 
 private val MILLIS: Component = Component.literal("ms")
@@ -233,12 +197,14 @@ private val TIMES: Component = Component.literal("×")
 /** Placeholder of an empty item field. */
 private val NOTHING: Component = Component.translatable("$KEY_PREFIX.hint.nothing")
 
-/** The translated name of an enum value, keyed by its class and constant name. */
-private fun enumName(value: Enum<*>): Component =
-    Component.translatable("$KEY_PREFIX.enum.${value.javaClass.simpleName.lowercase(Locale.ROOT)}.${value.name.lowercase(Locale.ROOT)}")
-
-/** The translated name of an arm pose. */
-private fun armPoseName(pose: Enum<*>): Component = Component.translatable("$KEY_PREFIX.enum.armpose.${pose.name.lowercase(Locale.ROOT)}")
+/**
+ * The translated name of an enum value, keyed by its enum class and constant name.
+ * Uses the declaring class, because a constant with its own body (like one of the vanilla arm poses) is an anonymous subclass.
+ */
+private fun enumName(value: Enum<*>): Component {
+    val enumClass = value.declaringJavaClass.simpleName.lowercase(Locale.ROOT)
+    return Component.translatable("$KEY_PREFIX.enum.$enumClass.${value.name.lowercase(Locale.ROOT)}")
+}
 
 /** Accepts an empty field or a known item id; rejects air and unknown ids. */
 private fun validateItem(id: String): Component? =
