@@ -236,12 +236,14 @@ object ConfigManager {
      * Writes the current configuration to disk.
      *
      * The config is written to a temporary file first and then moved over the real one,
-     * so a failed write (e.g. a full disk) leaves the previous file intact.
+     * so a failed write (e.g. a full disk) leaves the previous file intact. Each call uses its
+     * own temporary file, so two game instances sharing the config directory cannot mix their writes.
      */
     fun save() {
-        val tempPath = path.resolveSibling("${path.fileName}.tmp")
+        var tempPath: Path? = null
         try {
             Files.createDirectories(path.parent)
+            tempPath = Files.createTempFile(path.parent, "${path.fileName}.", ".tmp")
             Files.newBufferedWriter(tempPath).use { writer -> gson.toJson(config, writer) }
             try {
                 Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
@@ -250,7 +252,7 @@ object ConfigManager {
             }
         } catch (e: IOException) {
             Gommemode.LOGGER.error("Failed to write config file {}", path, e)
-            runCatching { Files.deleteIfExists(tempPath) }
+            tempPath?.let { runCatching { Files.deleteIfExists(it) } }
         }
     }
 }
