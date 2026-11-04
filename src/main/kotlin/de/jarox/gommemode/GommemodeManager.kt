@@ -71,9 +71,16 @@ object GommemodeManager {
     }
 
     /**
-     * Runs once per client tick: handles the configured song-end behavior.
+     * Runs once per client tick: keeps the game music quiet while the song plays and
+     * handles the configured song-end behavior.
      */
     fun tick(player: LocalPlayer) {
+        if (ConfigManager.config.pauseMusic && isPlaying()) {
+            // Stops the current track and pushes the next one back, so no track starts during the song.
+            // The music returns on its own after the usual delay once the song is over.
+            minecraft.musicManager.stopPlaying()
+        }
+
         if (!isActive || activeSound == null || isPlaying()) return
 
         // The song has finished while Gommemode is active.

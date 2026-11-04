@@ -33,6 +33,8 @@
   "config.gommemode.option.soundSource.tooltip": "Which volume slider in the Music & Sounds settings controls the song.\nChanging it restarts a playing song from the beginning.",
   "config.gommemode.option.positionalSound": "Positional Sound",
   "config.gommemode.option.positionalSound.tooltip": "On: the song plays from the entity and gets quieter with distance.\nOff: the song plays at the same volume everywhere.\nChanging it restarts a playing song from the beginning.",
+  "config.gommemode.option.pauseMusic": "Pause Game Music",
+  "config.gommemode.option.pauseMusic.tooltip": "Stop the Minecraft music while the song plays.\nIt returns after the usual pause once the song is over.",
   "config.gommemode.option.spawnLocation": "Spawn Location",
   "config.gommemode.option.spawnLocation.tooltip": "Where the entity appears when Gommemode is activated.\nApplies the next time Gommemode is activated.",
   "config.gommemode.option.spawnDistance": "Spawn Distance",

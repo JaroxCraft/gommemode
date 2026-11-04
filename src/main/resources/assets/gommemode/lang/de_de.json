@@ -33,6 +33,8 @@
   "config.gommemode.option.soundSource.tooltip": "Welcher Lautstärkeregler in den Musik- und Geräuscheinstellungen das Lied steuert.\nÄndern startet ein laufendes Lied von vorn.",
   "config.gommemode.option.positionalSound": "Räumlicher Sound",
   "config.gommemode.option.positionalSound.tooltip": "An: Das Lied kommt vom Entity und wird mit der Entfernung leiser.\nAus: Das Lied ist überall gleich laut.\nÄndern startet ein laufendes Lied von vorn.",
+  "config.gommemode.option.pauseMusic": "Spielmusik pausieren",
+  "config.gommemode.option.pauseMusic.tooltip": "Die Minecraft-Musik stoppen, solange das Lied läuft.\nSie kommt nach der üblichen Pause zurück, wenn das Lied vorbei ist.",
   "config.gommemode.option.spawnLocation": "Spawn-Ort",
   "config.gommemode.option.spawnLocation.tooltip": "Wo das Entity beim Aktivieren erscheint.\nGilt ab dem nächsten Aktivieren.",
   "config.gommemode.option.spawnDistance": "Spawn-Entfernung",
