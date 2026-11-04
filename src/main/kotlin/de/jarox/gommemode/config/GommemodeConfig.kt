@@ -8,8 +8,10 @@ import net.minecraft.client.model.HumanoidModel
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.HumanoidArm
 import java.io.IOException
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
 /** What happens when the Gomme hymn finishes while Gommemode is active. */
 enum class SongEndBehavior {
@@ -180,13 +182,25 @@ object ConfigManager {
         if (!readFailed) save()
     }
 
-    /** Writes the current configuration to disk. */
+    /**
+     * Writes the current configuration to disk.
+     *
+     * The config is written to a temporary file first and then moved over the real one,
+     * so a failed write (e.g. a full disk) leaves the previous file intact.
+     */
     fun save() {
+        val tempPath = path.resolveSibling("${path.fileName}.tmp")
         try {
             Files.createDirectories(path.parent)
-            Files.newBufferedWriter(path).use { writer -> gson.toJson(config, writer) }
+            Files.newBufferedWriter(tempPath).use { writer -> gson.toJson(config, writer) }
+            try {
+                Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+            } catch (_: AtomicMoveNotSupportedException) {
+                Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING)
+            }
         } catch (e: IOException) {
             Gommemode.LOGGER.error("Failed to write config file {}", path, e)
+            runCatching { Files.deleteIfExists(tempPath) }
         }
     }
 }
