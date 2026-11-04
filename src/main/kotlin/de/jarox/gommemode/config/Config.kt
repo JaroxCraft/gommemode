@@ -439,7 +439,7 @@ object Config {
             id.isBlank() -> Optional.empty()
             Identifier.tryParse(id.trim()) == BuiltInRegistries.ITEM.getKey(Items.AIR) ->
                 Optional.of(Component.translatable("$KEY_PREFIX.error.airItem"))
-            !GommeEntity.resolveItem(id).isEmpty -> Optional.empty()
+            GommeEntity.findItem(id) != null -> Optional.empty()
             else -> Optional.of(Component.translatable("$KEY_PREFIX.error.unknownItem", id.trim()))
         }
 
