@@ -15,8 +15,10 @@ internal object Theme {
     const val SELECTED: Int = 0x30FFFFFF
     const val INPUT: Int = 0x60000000
     const val DROPDOWN: Int = 0xF0101010.toInt()
+    const val DIVIDER: Int = 0x40FFFFFF
 
     const val TEXT: Int = 0xFFFFFFFF.toInt()
+    const val TEXT_SOFT: Int = 0xFFD0D0D0.toInt()
     const val TEXT_DIM: Int = 0xFF9A9A9A.toInt()
     const val TEXT_DISABLED: Int = 0xFF606060.toInt()
     const val ACCENT: Int = 0xFF8AD7FF.toInt()
