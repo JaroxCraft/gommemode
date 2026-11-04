@@ -3,20 +3,26 @@ package de.jarox.gommemode.config
 import de.jarox.gommemode.Gommemode
 import de.jarox.gommemode.GommemodeManager
 import de.jarox.gommemode.util.RegistryIds
+import me.shedaniel.clothconfig2.api.AbstractConfigListEntry
 import me.shedaniel.clothconfig2.api.ConfigBuilder
 import me.shedaniel.clothconfig2.api.ConfigCategory
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder
+import me.shedaniel.clothconfig2.impl.builders.AbstractFieldBuilder
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.client.model.HumanoidModel
 import net.minecraft.core.particles.SimpleParticleType
 import net.minecraft.network.chat.Component
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.HumanoidArm
 import java.util.Locale
 import java.util.Optional
+import java.util.function.Supplier
+import kotlin.reflect.KMutableProperty1
+
+/** A config option; its property name is also the option name in the translation keys. */
+private typealias Option<T> = KMutableProperty1<GommemodeConfig, T>
 
 /**
  * Configuration screen factory for the Gommemode mod.
@@ -46,75 +52,36 @@ object Config {
                     GommemodeManager.onConfigChanged()
                 }
 
+        val entries = builder.entryBuilder()
         val config = ConfigManager.config
         val defaults = GommemodeConfig()
-        val entries = builder.entryBuilder()
 
-        addGeneralOptions(builder.category("general"), entries, config, defaults)
-        addSoundOptions(builder.category("sound"), entries, config, defaults)
-        addSpawnOptions(builder.category("spawn"), entries, config, defaults)
-        addParticleOptions(builder.category("particles"), entries, config, defaults)
-        addEntityOptions(builder.category("entity"), entries, config, defaults)
+        /** The entries for the category called [name]. */
+        fun category(name: String) =
+            CategoryEntries(
+                builder.getOrCreateCategory(Component.translatable("$KEY_PREFIX.category.$name")),
+                entries,
+                config,
+                defaults,
+            )
+
+        category("general").addGeneralOptions()
+        category("sound").addSoundOptions()
+        category("spawn").addSpawnOptions()
+        category("particles").addParticleOptions()
+        category("entity").addEntityOptions()
 
         return builder.build()
     }
 
-    /** Adds the enable switch, toggle key, cooldown, song-end behavior and message options. */
-    private fun addGeneralOptions(
-        category: ConfigCategory,
-        entries: ConfigEntryBuilder,
-        config: GommemodeConfig,
-        defaults: GommemodeConfig,
-    ) {
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("enabled"), config.enabled)
-                .setDefaultValue(defaults.enabled)
-                .setTooltip(tooltip("enabled"))
-                .setSaveConsumer { config.enabled = it }
-                .build(),
-        )
-
-        Gommemode.toggleKeyMapping?.let { keyMapping -> category.addEntry(keyEntry(entries, keyMapping)) }
-
-        category.addEntry(
-            entries
-                .startIntField(label("toggleCooldownMs"), config.toggleCooldownMs)
-                .setDefaultValue(defaults.toggleCooldownMs)
-                .setMin(GommemodeConfig.MIN_COOLDOWN_MS)
-                .setMax(GommemodeConfig.MAX_COOLDOWN_MS)
-                .setTooltip(tooltip("toggleCooldownMs"))
-                .setSaveConsumer { config.toggleCooldownMs = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startEnumSelector(label("songEndBehavior"), SongEndBehavior::class.java, config.songEndBehavior)
-                .setDefaultValue(defaults.songEndBehavior)
-                .setEnumNameProvider(::enumName)
-                .setTooltip(tooltip("songEndBehavior"))
-                .setSaveConsumer { config.songEndBehavior = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startIntField(label("loopIntervalMs"), config.loopIntervalMs)
-                .setDefaultValue(defaults.loopIntervalMs)
-                .setMin(GommemodeConfig.MIN_LOOP_INTERVAL_MS)
-                .setMax(GommemodeConfig.MAX_LOOP_INTERVAL_MS)
-                .setTooltip(tooltip("loopIntervalMs"))
-                .setSaveConsumer { config.loopIntervalMs = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startEnumSelector(label("messageDisplay"), MessageDisplay::class.java, config.messageDisplay)
-                .setDefaultValue(defaults.messageDisplay)
-                .setEnumNameProvider(::enumName)
-                .setTooltip(tooltip("messageDisplay"))
-                .setSaveConsumer { config.messageDisplay = it }
-                .build(),
-        )
+    /** Adds the enable switch, toggle key, cooldown, song-end behavior, loop interval and message options. */
+    private fun CategoryEntries.addGeneralOptions() {
+        toggle(GommemodeConfig::enabled)
+        Gommemode.toggleKeyMapping?.let { add(keyEntry(entries, it)) }
+        intField(GommemodeConfig::toggleCooldownMs, GommemodeConfig.MIN_COOLDOWN_MS, GommemodeConfig.MAX_COOLDOWN_MS)
+        enumSelector(GommemodeConfig::songEndBehavior)
+        intField(GommemodeConfig::loopIntervalMs, GommemodeConfig.MIN_LOOP_INTERVAL_MS, GommemodeConfig.MAX_LOOP_INTERVAL_MS)
+        enumSelector(GommemodeConfig::messageDisplay)
     }
 
     /** Builds the toggle key field; saving it rebinds the vanilla key mapping and saves the options. */
@@ -139,299 +106,130 @@ object Config {
     /** The key this mapping is currently bound to. */
     private fun KeyMapping.boundKey() = KeyMappingHelper.getBoundKeyOf(this)
 
-    /** Adds the song, volume, pitch, sound category and positional sound options. */
-    private fun addSoundOptions(
-        category: ConfigCategory,
-        entries: ConfigEntryBuilder,
-        config: GommemodeConfig,
-        defaults: GommemodeConfig,
-    ) {
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("soundEnabled"), config.soundEnabled)
-                .setDefaultValue(defaults.soundEnabled)
-                .setTooltip(tooltip("soundEnabled"))
-                .setSaveConsumer { config.soundEnabled = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startIntSlider(
-                    label("volumePercent"),
-                    config.volumePercent,
-                    GommemodeConfig.MIN_VOLUME_PERCENT,
-                    GommemodeConfig.MAX_VOLUME_PERCENT,
-                ).setDefaultValue(defaults.volumePercent)
-                .setTextGetter(::percent)
-                .setTooltip(tooltip("volumePercent"))
-                .setSaveConsumer { config.volumePercent = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startIntSlider(
-                    label("pitchPercent"),
-                    config.pitchPercent,
-                    GommemodeConfig.MIN_PITCH_PERCENT,
-                    GommemodeConfig.MAX_PITCH_PERCENT,
-                ).setDefaultValue(defaults.pitchPercent)
-                .setTextGetter(::percent)
-                .setTooltip(tooltip("pitchPercent"))
-                .setSaveConsumer { config.pitchPercent = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startEnumSelector(label("soundSource"), SoundSource::class.java, config.soundSource)
-                .setDefaultValue(defaults.soundSource)
-                .setEnumNameProvider { Component.translatable("soundCategory." + (it as SoundSource).getName()) }
-                .setTooltip(tooltip("soundSource"))
-                .setSaveConsumer { config.soundSource = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("positionalSound"), config.positionalSound)
-                .setDefaultValue(defaults.positionalSound)
-                .setTooltip(tooltip("positionalSound"))
-                .setSaveConsumer { config.positionalSound = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("stopMusic"), config.stopMusic)
-                .setDefaultValue(defaults.stopMusic)
-                .setTooltip(tooltip("stopMusic"))
-                .setSaveConsumer { config.stopMusic = it }
-                .build(),
-        )
+    /** Adds the song, volume, pitch, sound category, positional sound and game music options. */
+    private fun CategoryEntries.addSoundOptions() {
+        toggle(GommemodeConfig::soundEnabled)
+        percentSlider(GommemodeConfig::volumePercent, GommemodeConfig.MIN_VOLUME_PERCENT, GommemodeConfig.MAX_VOLUME_PERCENT)
+        percentSlider(GommemodeConfig::pitchPercent, GommemodeConfig.MIN_PITCH_PERCENT, GommemodeConfig.MAX_PITCH_PERCENT)
+        enumSelector(GommemodeConfig::soundSource) { Component.translatable("soundCategory." + (it as SoundSource).getName()) }
+        toggle(GommemodeConfig::positionalSound)
+        toggle(GommemodeConfig::stopMusic)
     }
 
     /** Adds the spawn location, spawn distance and fluid targeting options. */
-    private fun addSpawnOptions(
-        category: ConfigCategory,
-        entries: ConfigEntryBuilder,
-        config: GommemodeConfig,
-        defaults: GommemodeConfig,
-    ) {
-        category.addEntry(
-            entries
-                .startEnumSelector(label("spawnLocation"), SpawnLocation::class.java, config.spawnLocation)
-                .setDefaultValue(defaults.spawnLocation)
-                .setEnumNameProvider(::enumName)
-                .setTooltip(tooltip("spawnLocation"))
-                .setSaveConsumer { config.spawnLocation = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startDoubleField(label("spawnDistance"), config.spawnDistance)
-                .setDefaultValue(defaults.spawnDistance)
-                .setMin(GommemodeConfig.MIN_SPAWN_DISTANCE)
-                .setMax(GommemodeConfig.MAX_SPAWN_DISTANCE)
-                .setTooltip(tooltip("spawnDistance"))
-                .setSaveConsumer { config.spawnDistance = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("spawnHitsFluids"), config.spawnHitsFluids)
-                .setDefaultValue(defaults.spawnHitsFluids)
-                .setTooltip(tooltip("spawnHitsFluids"))
-                .setSaveConsumer { config.spawnHitsFluids = it }
-                .build(),
-        )
+    private fun CategoryEntries.addSpawnOptions() {
+        enumSelector(GommemodeConfig::spawnLocation)
+        doubleField(GommemodeConfig::spawnDistance, GommemodeConfig.MIN_SPAWN_DISTANCE, GommemodeConfig.MAX_SPAWN_DISTANCE)
+        toggle(GommemodeConfig::spawnHitsFluids)
     }
 
     /** Adds the particle switch, type, sphere radius and spacing options. */
-    private fun addParticleOptions(
-        category: ConfigCategory,
-        entries: ConfigEntryBuilder,
-        config: GommemodeConfig,
-        defaults: GommemodeConfig,
-    ) {
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("particlesEnabled"), config.particlesEnabled)
-                .setDefaultValue(defaults.particlesEnabled)
-                .setTooltip(tooltip("particlesEnabled"))
-                .setSaveConsumer { config.particlesEnabled = it }
-                .build(),
-        )
-        category.addEntry(
-            idDropdown(
-                entries,
-                "particleType",
-                config.particleType,
-                defaults.particleType,
-                RegistryIds.simpleParticleIds(),
-                ::validateParticle,
-            ) {
-                config.particleType = it
-            },
-        )
-        category.addEntry(
-            entries
-                .startDoubleField(label("particleRadius"), config.particleRadius)
-                .setDefaultValue(defaults.particleRadius)
-                .setMin(GommemodeConfig.MIN_PARTICLE_RADIUS)
-                .setMax(GommemodeConfig.MAX_PARTICLE_RADIUS)
-                .setTooltip(tooltip("particleRadius"))
-                .setSaveConsumer { config.particleRadius = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startDoubleField(label("particleStepSize"), config.particleStepSize)
-                .setDefaultValue(defaults.particleStepSize)
-                .setMin(GommemodeConfig.MIN_PARTICLE_STEP)
-                .setMax(GommemodeConfig.MAX_PARTICLE_STEP)
-                .setTooltip(tooltip("particleStepSize"))
-                .setSaveConsumer { config.particleStepSize = it }
-                .build(),
-        )
+    private fun CategoryEntries.addParticleOptions() {
+        toggle(GommemodeConfig::particlesEnabled)
+        idDropdown(GommemodeConfig::particleType, RegistryIds.simpleParticleIds(), ::validateParticle)
+        doubleField(GommemodeConfig::particleRadius, GommemodeConfig.MIN_PARTICLE_RADIUS, GommemodeConfig.MAX_PARTICLE_RADIUS)
+        doubleField(GommemodeConfig::particleStepSize, GommemodeConfig.MIN_PARTICLE_STEP, GommemodeConfig.MAX_PARTICLE_STEP)
     }
 
-    /** Adds the held items, arm, pose, look, scale, shadow, name tag and glow options. */
-    private fun addEntityOptions(
-        category: ConfigCategory,
-        entries: ConfigEntryBuilder,
-        config: GommemodeConfig,
-        defaults: GommemodeConfig,
-    ) {
-        category.addEntry(
-            idDropdown(entries, "mainHandItem", config.mainHandItem, defaults.mainHandItem, RegistryIds.itemIds(), ::validateItem) {
-                config.mainHandItem = it
-            },
-        )
-        category.addEntry(
-            idDropdown(entries, "offHandItem", config.offHandItem, defaults.offHandItem, RegistryIds.itemIds(), ::validateItem) {
-                config.offHandItem = it
-            },
-        )
-        category.addEntry(
-            entries
-                .startEnumSelector(label("mainArm"), HumanoidArm::class.java, config.mainArm)
-                .setDefaultValue(defaults.mainArm)
-                .setEnumNameProvider { (it as HumanoidArm).caption() }
-                .setTooltip(tooltip("mainArm"))
-                .setSaveConsumer { config.mainArm = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startEnumSelector(label("mainArmPose"), HumanoidModel.ArmPose::class.java, config.mainArmPose)
-                .setDefaultValue(defaults.mainArmPose)
-                .setEnumNameProvider { Component.translatable("$KEY_PREFIX.enum.armpose.${it.name.lowercase(Locale.ROOT)}") }
-                .setTooltip(tooltip("mainArmPose"))
-                .setSaveConsumer { config.mainArmPose = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startEnumSelector(label("offArmPose"), HumanoidModel.ArmPose::class.java, config.offArmPose)
-                .setDefaultValue(defaults.offArmPose)
-                .setEnumNameProvider { Component.translatable("$KEY_PREFIX.enum.armpose.${it.name.lowercase(Locale.ROOT)}") }
-                .setTooltip(tooltip("offArmPose"))
-                .setSaveConsumer { config.offArmPose = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("lookAtPlayer"), config.lookAtPlayer)
-                .setDefaultValue(defaults.lookAtPlayer)
-                .setTooltip(tooltip("lookAtPlayer"))
-                .setSaveConsumer { config.lookAtPlayer = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startEnumSelector(label("lookTarget"), LookTarget::class.java, config.lookTarget)
-                .setDefaultValue(defaults.lookTarget)
-                .setEnumNameProvider(::enumName)
-                .setTooltip(tooltip("lookTarget"))
-                .setSaveConsumer { config.lookTarget = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startDoubleField(label("scale"), config.scale)
-                .setDefaultValue(defaults.scale)
-                .setMin(GommemodeConfig.MIN_SCALE)
-                .setMax(GommemodeConfig.MAX_SCALE)
-                .setTooltip(tooltip("scale"))
-                .setSaveConsumer { config.scale = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startDoubleField(label("shadowRadius"), config.shadowRadius)
-                .setDefaultValue(defaults.shadowRadius)
-                .setMin(GommemodeConfig.MIN_SHADOW_RADIUS)
-                .setMax(GommemodeConfig.MAX_SHADOW_RADIUS)
-                .setTooltip(tooltip("shadowRadius"))
-                .setSaveConsumer { config.shadowRadius = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("showNameTag"), config.showNameTag)
-                .setDefaultValue(defaults.showNameTag)
-                .setTooltip(tooltip("showNameTag"))
-                .setSaveConsumer { config.showNameTag = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startStrField(label("nameTagText"), config.nameTagText)
-                .setDefaultValue(defaults.nameTagText)
-                .setTooltip(tooltip("nameTagText"))
-                .setSaveConsumer { config.nameTagText = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startBooleanToggle(label("glowing"), config.glowing)
-                .setDefaultValue(defaults.glowing)
-                .setTooltip(tooltip("glowing"))
-                .setSaveConsumer { config.glowing = it }
-                .build(),
-        )
-        category.addEntry(
-            entries
-                .startColorField(label("glowColor"), config.glowColor)
-                .setDefaultValue(defaults.glowColor)
-                .setTooltip(tooltip("glowColor"))
-                .setSaveConsumer { config.glowColor = it }
-                .build(),
-        )
+    /** Adds the held items, arms, poses, look, scale, shadow, name tag and glow options. */
+    private fun CategoryEntries.addEntityOptions() {
+        val itemIds = RegistryIds.itemIds()
+        idDropdown(GommemodeConfig::mainHandItem, itemIds, ::validateItem)
+        idDropdown(GommemodeConfig::offHandItem, itemIds, ::validateItem)
+        enumSelector(GommemodeConfig::mainArm) { (it as HumanoidArm).caption() }
+        enumSelector(GommemodeConfig::mainArmPose, ::armPoseName)
+        enumSelector(GommemodeConfig::offArmPose, ::armPoseName)
+        toggle(GommemodeConfig::lookAtPlayer)
+        enumSelector(GommemodeConfig::lookTarget)
+        doubleField(GommemodeConfig::scale, GommemodeConfig.MIN_SCALE, GommemodeConfig.MAX_SCALE)
+        doubleField(GommemodeConfig::shadowRadius, GommemodeConfig.MIN_SHADOW_RADIUS, GommemodeConfig.MAX_SHADOW_RADIUS)
+        toggle(GommemodeConfig::showNameTag)
+        add(GommemodeConfig::nameTagText) { label, value -> entries.startStrField(label, value) }
+        toggle(GommemodeConfig::glowing)
+        add(GommemodeConfig::glowColor) { label, value -> entries.startColorField(label, value) }
     }
 
     /**
-     * Builds a text field with a dropdown of suggested registry ids. Any text can still be typed;
-     * [validate] decides whether it is accepted. The saved value is trimmed.
+     * Adds config options to one category of the screen. Each entry gets the label, tooltip and
+     * default value of its option and writes the edited value back to [config] on save.
      */
-    private fun idDropdown(
-        entries: ConfigEntryBuilder,
-        option: String,
-        value: String,
-        default: String,
-        suggestions: List<String>,
-        validate: (String) -> Optional<Component>,
-        save: (String) -> Unit,
-    ) = entries
-        .startStringDropdownMenu(label(option), value)
-        .setSelections(suggestions)
-        .setSuggestionMode(true)
-        .setDefaultValue(default)
-        .setTooltip(tooltip(option))
-        .setErrorSupplier(validate)
-        .setSaveConsumer { save(it.trim()) }
-        .build()
+    private class CategoryEntries(
+        private val category: ConfigCategory,
+        val entries: ConfigEntryBuilder,
+        private val config: GommemodeConfig,
+        private val defaults: GommemodeConfig,
+    ) {
+        /** Adds an entry that is not tied to a config option. */
+        fun add(entry: AbstractConfigListEntry<*>) {
+            category.addEntry(entry)
+        }
 
-    /** Gets or creates the category with the translated name for [name]. */
-    private fun ConfigBuilder.category(name: String): ConfigCategory =
-        getOrCreateCategory(Component.translatable("$KEY_PREFIX.category.$name"))
+        /** Adds an entry for [option]; [start] creates the field from the label and the current value. */
+        fun <T : Any, B : AbstractFieldBuilder<T, *, B>> add(
+            option: Option<T>,
+            start: (Component, T) -> B,
+        ) {
+            add(
+                start(label(option.name), option.get(config))
+                    .setDefaultValue(Supplier { option.get(defaults) })
+                    .setTooltip(tooltip(option.name))
+                    .setSaveConsumer { option.set(config, it) }
+                    .build(),
+            )
+        }
+
+        /** Adds an on/off switch. */
+        fun toggle(option: Option<Boolean>) = add(option) { label, value -> entries.startBooleanToggle(label, value) }
+
+        /** Adds a whole-number field limited to [min]..[max]. */
+        fun intField(
+            option: Option<Int>,
+            min: Int,
+            max: Int,
+        ) = add(option) { label, value -> entries.startIntField(label, value).setMin(min).setMax(max) }
+
+        /** Adds a slider from [min] to [max] that shows its value as a percentage. */
+        fun percentSlider(
+            option: Option<Int>,
+            min: Int,
+            max: Int,
+        ) = add(option) { label, value -> entries.startIntSlider(label, value, min, max).setTextGetter(::percent) }
+
+        /** Adds a decimal field limited to [min]..[max]. */
+        fun doubleField(
+            option: Option<Double>,
+            min: Double,
+            max: Double,
+        ) = add(option) { label, value -> entries.startDoubleField(label, value).setMin(min).setMax(max) }
+
+        /** Adds a selector for an enum option; [names] gives the shown name of each value. */
+        fun <E : Enum<E>> enumSelector(
+            option: Option<E>,
+            names: (Enum<*>) -> Component = ::enumName,
+        ) = add(option) { label, value ->
+            entries.startEnumSelector(label, value.declaringJavaClass, value).setEnumNameProvider(names)
+        }
+
+        /**
+         * Adds a text field with a dropdown of suggested registry ids. Any text can still be typed;
+         * [validate] decides whether it is accepted. The saved value is trimmed.
+         */
+        fun idDropdown(
+            option: Option<String>,
+            suggestions: List<String>,
+            validate: (String) -> Optional<Component>,
+        ) = add(
+            entries
+                .startStringDropdownMenu(label(option.name), option.get(config))
+                .setSelections(suggestions)
+                .setSuggestionMode(true)
+                .setDefaultValue(option.get(defaults))
+                .setTooltip(tooltip(option.name))
+                .setErrorSupplier(validate)
+                .setSaveConsumer { option.set(config, it.trim()) }
+                .build(),
+        )
+    }
 
     /** The translated label of [option]. */
     private fun label(option: String): Component = Component.translatable("$KEY_PREFIX.option.$option")
@@ -447,6 +245,10 @@ object Config {
         Component.translatable(
             "$KEY_PREFIX.enum.${value.javaClass.simpleName.lowercase(Locale.ROOT)}.${value.name.lowercase(Locale.ROOT)}",
         )
+
+    /** The translated name of an arm pose. */
+    private fun armPoseName(pose: Enum<*>): Component =
+        Component.translatable("$KEY_PREFIX.enum.armpose.${pose.name.lowercase(Locale.ROOT)}")
 
     /** Accepts an empty field or a known item id; rejects air and unknown ids. */
     private fun validateItem(id: String): Optional<Component> =
